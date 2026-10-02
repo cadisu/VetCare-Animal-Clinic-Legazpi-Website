@@ -8,6 +8,7 @@ export const metadata: Metadata = {
     template: `%s | ${clinic.name}`,
   },
   description: clinic.intro,
+  icons: { icon: "/VetCare_Logo.jpg" },
 };
 
 export const viewport: Viewport = {
