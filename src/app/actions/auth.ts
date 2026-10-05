@@ -84,13 +84,19 @@ export async function loginAction(_prev: FormState, formData: FormData): Promise
 /* ------------------------------------------------------------------ */
 export async function registerAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const raw = {
-    fullName: text(formData, "fullName"),
-    email: text(formData, "email"),
+    lastName: text(formData, "lastName"),
+    middleName: text(formData, "middleName"),
+    firstName: text(formData, "firstName"),
+    address: text(formData, "address"),
+    birthdate: text(formData, "birthdate"),
     contactNumber: text(formData, "contactNumber"),
+    email: text(formData, "email"),
     password: text(formData, "password"),
     confirmPassword: text(formData, "confirmPassword"),
   };
-  const values = { fullName: raw.fullName, email: raw.email, contactNumber: raw.contactNumber };
+  const values: Record<string, string> = Object.fromEntries(
+    Object.entries(raw).filter(([key]) => key !== "password" && key !== "confirmPassword"),
+  );
 
   // Any "role" field a malicious user adds to the request is never read.
   const parsed = registerSchema.safeParse(raw);
@@ -99,7 +105,8 @@ export async function registerAction(_prev: FormState, formData: FormData): Prom
   }
   if (!isSupabaseConfigured()) return { error: NOT_CONFIGURED, values };
 
-  const { fullName, email, contactNumber, password } = parsed.data;
+  const { lastName, middleName, firstName, address, birthdate, contactNumber, email, password } =
+    parsed.data;
   const siteUrl = await getSiteUrl();
   const supabase = await createClient();
 
@@ -109,7 +116,14 @@ export async function registerAction(_prev: FormState, formData: FormData): Prom
     options: {
       emailRedirectTo: `${siteUrl}/auth/callback?next=/dashboard`,
       // Only descriptive data. The DB trigger forces role = CLIENT regardless.
-      data: { full_name: fullName, contact_number: contactNumber },
+      data: {
+        last_name: lastName,
+        middle_name: middleName ?? "",
+        first_name: firstName,
+        address,
+        birthdate,
+        contact_number: contactNumber,
+      },
     },
   });
 
@@ -127,7 +141,7 @@ export async function registerAction(_prev: FormState, formData: FormData): Prom
   // registered, so the form cannot be used to discover registered emails.
   return {
     success:
-      "Almost done! If this email can be registered, we've sent a confirmation link. Please check your inbox, then log in.",
+      "Almost done! If this email can be registered, we've sent a confirmation link. Please check your inbox, then log in to register your pets.",
   };
 }
 

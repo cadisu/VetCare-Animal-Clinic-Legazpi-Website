@@ -1,19 +1,12 @@
 import { z } from "zod";
+import { clientProfileFields } from "./client";
 
 /**
  * Validation schemas shared by the forms (feedback) and the server actions
  * (authoritative check). Never trust client-side validation alone.
  */
 
-/** Accepts 09XXXXXXXXX, +639XXXXXXXXX or 639XXXXXXXXX; normalises to 09XXXXXXXXX. */
-export const phoneSchema = z
-  .string()
-  .trim()
-  .transform((v) => v.replace(/[\s-]/g, ""))
-  .refine((v) => /^(09\d{9}|\+639\d{9}|639\d{9})$/.test(v), {
-    message: "Enter a valid Philippine mobile number (e.g. 09171234567).",
-  })
-  .transform((v) => (v.startsWith("09") ? v : `0${v.replace(/^\+?63/, "")}`));
+export { phoneSchema } from "./common";
 
 export const passwordSchema = z
   .string()
@@ -39,13 +32,8 @@ export const loginSchema = z.object({
 // (enforced again by the database trigger).
 export const registerSchema = z
   .object({
-    fullName: z
-      .string()
-      .trim()
-      .min(2, "Enter your full name.")
-      .max(120, "Name is too long."),
+    ...clientProfileFields,
     email: emailSchema,
-    contactNumber: phoneSchema,
     password: passwordSchema,
     confirmPassword: z.string(),
   })

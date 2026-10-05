@@ -6,7 +6,7 @@ export const metadata: Metadata = { title: "Senior Vet Dashboard" };
 
 export default async function SeniorVetDashboardPage() {
   const profile = await requireRole(["SENIOR_VET"]);
-  const firstName = profile.full_name.split(" ")[0] || "Doc";
+  const firstName = profile.first_name || "Doc";
 
   return (
     <>

@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-export type PortalNavItem = { href: string; label: string };
+/** `exact` keeps a parent item (e.g. "/client") from staying highlighted on its sub-pages. */
+export type PortalNavItem = { href: string; label: string; exact?: boolean };
 
 export function PortalNav({ items }: { items: PortalNavItem[] }) {
   const pathname = usePathname();
@@ -11,7 +12,8 @@ export function PortalNav({ items }: { items: PortalNavItem[] }) {
   return (
     <nav aria-label="Portal" className="-mb-px flex gap-1 overflow-x-auto">
       {items.map((item) => {
-        const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
+        const active =
+          pathname === item.href || (!item.exact && pathname.startsWith(`${item.href}/`));
         return (
           <Link
             key={item.href}

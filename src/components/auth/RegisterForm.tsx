@@ -2,13 +2,14 @@
 
 import { useActionState } from "react";
 import { registerAction, type FormState } from "@/app/actions/auth";
+import { ClientProfileFields } from "@/components/clients/ClientProfileFields";
 import { Alert } from "@/components/ui/Alert";
 import { FormField } from "@/components/ui/FormField";
 import { SubmitButton } from "@/components/ui/SubmitButton";
 
 const initial: FormState = {};
 
-export function RegisterForm() {
+export function RegisterForm({ maxBirthdate }: { maxBirthdate: string }) {
   const [state, formAction] = useActionState(registerAction, initial);
 
   if (state.success) {
@@ -20,13 +21,10 @@ export function RegisterForm() {
       {state.error && <Alert variant="error">{state.error}</Alert>}
 
       {/* No role selector on purpose: public sign-up always creates a Client account. */}
-      <FormField
-        label="Full name"
-        name="fullName"
-        autoComplete="name"
-        required
-        defaultValue={state.values?.fullName}
-        errors={state.fieldErrors?.fullName}
+      <ClientProfileFields
+        values={state.values}
+        fieldErrors={state.fieldErrors}
+        maxBirthdate={maxBirthdate}
       />
       <FormField
         label="Email"
@@ -35,20 +33,9 @@ export function RegisterForm() {
         autoComplete="email"
         inputMode="email"
         required
+        hint="You'll use this to log in."
         defaultValue={state.values?.email}
         errors={state.fieldErrors?.email}
-      />
-      <FormField
-        label="Mobile number"
-        name="contactNumber"
-        type="tel"
-        autoComplete="tel"
-        inputMode="tel"
-        placeholder="09171234567"
-        required
-        hint="Used for appointment reminders."
-        defaultValue={state.values?.contactNumber}
-        errors={state.fieldErrors?.contactNumber}
       />
       <FormField
         label="Password"

@@ -6,8 +6,8 @@
  * The full in-app user management UI for this is built in Phase 12.
  *
  * Usage (from the project root, with .env.local filled in):
- *   npm run create-privileged-user -- --email vet@clinic.test --password "Str0ngPass1" --name "Dr. Alex Sample" --role SENIOR_VET
- *   npm run create-privileged-user -- --email staff@clinic.test --password "Str0ngPass1" --name "Taylor Example" --role STAFF
+ *   npm run create-privileged-user -- --email vet@clinic.test --password "Str0ngPass1" --first-name "Alex" --last-name "Sample" --role SENIOR_VET
+ *   npm run create-privileged-user -- --email staff@clinic.test --password "Str0ngPass1" --first-name "Taylor" --last-name "Example" --role STAFF
  */
 import { createClient } from "@supabase/supabase-js";
 
@@ -18,7 +18,8 @@ function arg(name) {
 
 const email = arg("email")?.trim().toLowerCase();
 const password = arg("password");
-const name = arg("name")?.trim();
+const firstName = arg("first-name")?.trim();
+const lastName = arg("last-name")?.trim();
 const role = arg("role")?.trim().toUpperCase();
 const contact = arg("contact")?.trim() ?? null;
 
@@ -35,7 +36,7 @@ if (!url || !serviceKey) {
 }
 if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) fail("Provide a valid --email.");
 if (!password || password.length < 8) fail("Provide a --password of at least 8 characters.");
-if (!name) fail('Provide a --name, e.g. --name "Dr. Alex Sample".');
+if (!firstName || !lastName) fail('Provide --first-name and --last-name, e.g. --first-name "Alex" --last-name "Sample".');
 if (role !== "STAFF" && role !== "SENIOR_VET") fail("--role must be STAFF or SENIOR_VET.");
 
 const admin = createClient(url, serviceKey, {
@@ -46,14 +47,18 @@ const { data, error } = await admin.auth.admin.createUser({
   email,
   password,
   email_confirm: true,
-  user_metadata: { full_name: name, ...(contact ? { contact_number: contact } : {}) },
+  user_metadata: {
+    first_name: firstName,
+    last_name: lastName,
+    ...(contact ? { contact_number: contact } : {}),
+  },
 });
 if (error || !data.user) fail(`Could not create auth user: ${error?.message ?? "unknown error"}`);
 
 // The database trigger created a CLIENT profile; promote it (service role bypasses the column grants).
 const { error: updateError } = await admin
   .from("profiles")
-  .update({ role, status: "ACTIVE", full_name: name })
+  .update({ role, status: "ACTIVE", first_name: firstName, last_name: lastName })
   .eq("id", data.user.id);
 
 if (updateError) {

@@ -5,6 +5,7 @@ import { AuthCard } from "@/components/auth/AuthCard";
 import { RegisterForm } from "@/components/auth/RegisterForm";
 import { getSession } from "@/lib/auth/session";
 import { ROLE_HOME } from "@/lib/auth/roles";
+import { todayIso } from "@/lib/dates";
 
 export const metadata: Metadata = { title: "Create Account" };
 
@@ -17,7 +18,7 @@ export default async function RegisterPage() {
   return (
     <AuthCard
       title="Create your account"
-      description="Register as a pet owner to book appointments and keep your pets' records in one place."
+      description="Register as a pet owner to book appointments and keep your pets' records in one place. You can add your pets right after."
       footer={
         <p>
           Already have an account?{" "}
@@ -27,7 +28,7 @@ export default async function RegisterPage() {
         </p>
       }
     >
-      <RegisterForm />
+      <RegisterForm maxBirthdate={todayIso()} />
     </AuthCard>
   );
 }

@@ -8,9 +8,13 @@ export default async function StaffLayout({ children }: { children: React.ReactN
     profile.role === "SENIOR_VET"
       ? [
           { href: "/senior-vet", label: "Senior Vet Dashboard" },
-          { href: "/staff", label: "Staff Dashboard" },
+          { href: "/staff", label: "Staff Dashboard", exact: true },
+          { href: "/staff/clients", label: "Clients" },
         ]
-      : [{ href: "/staff", label: "Dashboard" }];
+      : [
+          { href: "/staff", label: "Dashboard", exact: true },
+          { href: "/staff/clients", label: "Clients" },
+        ];
 
   return (
     <PortalShell profile={profile} nav={nav}>

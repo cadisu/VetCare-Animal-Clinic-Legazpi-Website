@@ -8,12 +8,23 @@ import { isUserRole, type AccountStatus, type UserRole } from "./roles";
 
 export type Profile = {
   id: string;
+  /** Derived in the database from first/middle/last name (read-only). */
   full_name: string;
+  last_name: string;
+  first_name: string;
+  middle_name: string | null;
   email: string;
   contact_number: string | null;
+  address: string | null;
+  birthdate: string | null;
   role: UserRole;
   status: AccountStatus;
+  onboarded_at: string | null;
+  created_at: string;
 };
+
+export const PROFILE_COLUMNS =
+  "id, full_name, last_name, first_name, middle_name, email, contact_number, address, birthdate, role, status, onboarded_at, created_at";
 
 export type Session = { user: User; profile: Profile | null };
 
@@ -33,7 +44,7 @@ export const getSession = cache(async (): Promise<Session | null> => {
 
   const { data } = await supabase
     .from("profiles")
-    .select("id, full_name, email, contact_number, role, status")
+    .select(PROFILE_COLUMNS)
     .eq("id", user.id)
     .maybeSingle();
 
