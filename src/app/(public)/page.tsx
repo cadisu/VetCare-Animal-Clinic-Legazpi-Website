@@ -43,16 +43,12 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* PLACEHOLDER hero image */}
-          <div
-            className="relative mx-auto flex aspect-[4/3] w-full max-w-lg items-center justify-center rounded-3xl bg-brand-muted"
-            role="img"
-            aria-label="Placeholder clinic photo"
-          >
-            <PawIcon className="h-32 w-32 text-brand/40" />
-            <span className="absolute bottom-4 right-4 rounded-md bg-white/80 px-2.5 py-1 text-xs text-slate-500">
-              Placeholder photo
-            </span>
+          <div className="relative mx-auto aspect-[4/3] w-full max-w-lg overflow-hidden rounded-3xl">
+            <img
+              src="/VetCare_GroupPIC_enhance.jpg"
+              alt="VetCare veterinary team"
+              className="size-full object-cover"
+            />
           </div>
         </div>
       </section>

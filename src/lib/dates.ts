@@ -11,6 +11,30 @@ export function todayIso(): string {
   }).format(new Date());
 }
 
+/** Add days to an ISO date string (UTC calendar math). */
+export function addDaysIso(iso: string, days: number): string {
+  const d = new Date(`${iso}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+
+/** Compare ISO dates: -1 if a < b, 0 if equal, 1 if a > b. */
+export function compareIsoDates(a: string, b: string): number {
+  return a.localeCompare(b);
+}
+
+/** Last day of month for YYYY-MM-DD's month (same string format). */
+export function endOfMonthIso(iso: string): string {
+  const [y, m] = iso.split("-").map(Number);
+  const last = new Date(Date.UTC(y, m, 0));
+  return last.toISOString().slice(0, 10);
+}
+
+/** First day of month containing iso (YYYY-MM-01). */
+export function startOfMonthIso(iso: string): string {
+  return `${iso.slice(0, 7)}-01`;
+}
+
 /** True for a real calendar date in YYYY-MM-DD form (rejects e.g. 2024-02-31). */
 export function isIsoDate(value: string): boolean {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;

@@ -8,7 +8,10 @@ export default async function SeniorVetLayout({ children }: { children: React.Re
       profile={profile}
       nav={[
         { href: "/senior-vet", label: "Senior Vet Dashboard" },
+        { href: "/senior-vet/services", label: "Services" },
+        { href: "/senior-vet/schedule", label: "Schedule" },
         { href: "/staff", label: "Staff Dashboard", exact: true },
+        { href: "/staff/appointments", label: "Appointments" },
         { href: "/staff/clients", label: "Clients" },
       ]}
     >

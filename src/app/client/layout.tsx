@@ -8,6 +8,7 @@ export default async function ClientLayout({ children }: { children: React.React
       profile={profile}
       nav={[
         { href: "/client", label: "Dashboard", exact: true },
+        { href: "/client/appointments", label: "Appointments" },
         { href: "/client/pets", label: "My Pets" },
         { href: "/client/profile", label: "My Profile" },
       ]}

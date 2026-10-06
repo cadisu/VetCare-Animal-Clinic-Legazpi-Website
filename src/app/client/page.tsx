@@ -1,18 +1,19 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { ClientUpcomingPreview } from "@/components/appointments/ClientUpcomingPreview";
 import { PetAvatar } from "@/components/pets/PetAvatar";
 import { DashboardHeading, PlaceholderCard } from "@/components/portal/PlaceholderCard";
 import { buttonClass } from "@/components/ui/button-styles";
+import { listAppointmentsForClient, splitClientAppointments } from "@/lib/appointments/server";
 import { requireRole } from "@/lib/auth/session";
-import { PET_COLUMNS, speciesLabel, type Pet } from "@/lib/pets/constants";
+import { speciesLabel, PET_COLUMNS, type Pet } from "@/lib/pets/constants";
 import { getPetImageUrls } from "@/lib/pets/server";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = { title: "Client Dashboard" };
 
 export default async function ClientDashboardPage() {
-  // Re-check on the page itself: layouts are not re-run on every client-side navigation.
   const profile = await requireRole(["CLIENT"]);
   if (!profile.onboarded_at) redirect("/client/get-started");
 
@@ -25,6 +26,9 @@ export default async function ClientDashboardPage() {
     .order("created_at", { ascending: true });
   const pets = (data ?? []) as Pet[];
   const imageUrls = await getPetImageUrls(supabase, pets.map((p) => p.image_path));
+  const { upcomingPreview } = splitClientAppointments(
+    await listAppointmentsForClient(supabase, profile.id),
+  );
 
   return (
     <>
@@ -33,10 +37,21 @@ export default async function ClientDashboardPage() {
         subtitle="Here's an overview of your pets and appointments."
       />
       <div className="grid gap-6 md:grid-cols-2">
-        <PlaceholderCard
-          title="Upcoming Appointment"
-          description="Your next appointment (pet, service, date, time and status) will appear here."
-        />
+        <section className="rounded-2xl border border-slate-200 bg-white p-6 md:col-span-2 lg:col-span-1">
+          <div className="flex items-start justify-between gap-3">
+            <h2 className="text-base font-semibold text-slate-900">Upcoming Appointments</h2>
+            <Link href="/client/appointments" className="text-sm font-semibold text-brand hover:underline">
+              View all
+            </Link>
+          </div>
+          <ClientUpcomingPreview
+            appointments={upcomingPreview}
+            detailHref={(id) => `/client/appointments/${id}`}
+          />
+          <Link href="/client/appointments/new" className={buttonClass("primary", "md", "mt-4 inline-flex")}>
+            Book an appointment
+          </Link>
+        </section>
         <section className="rounded-2xl border border-slate-200 bg-white p-6">
           <div className="flex items-start justify-between gap-3">
             <h2 className="text-base font-semibold text-slate-900">My Pets</h2>

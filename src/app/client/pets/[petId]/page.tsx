@@ -8,6 +8,7 @@ import { buttonClass } from "@/components/ui/button-styles";
 import { ConfirmSubmitButton } from "@/components/ui/ConfirmSubmitButton";
 import { requireRole } from "@/lib/auth/session";
 import { isUuid, PET_COLUMNS, type Pet } from "@/lib/pets/constants";
+import { listAppointmentsForPet } from "@/lib/appointments/server";
 import { getPetImageUrls } from "@/lib/pets/server";
 import { createClient } from "@/lib/supabase/server";
 
@@ -42,6 +43,7 @@ export default async function ClientPetPage({
   if (!data) notFound();
   const pet = data as Pet;
   const imageUrls = await getPetImageUrls(supabase, [pet.image_path]);
+  const appointmentHistory = await listAppointmentsForPet(supabase, pet.id);
 
   return (
     <>
@@ -72,6 +74,8 @@ export default async function ClientPetPage({
               </form>
             </>
           }
+          appointmentHistory={appointmentHistory}
+          appointmentsHref="/client/appointments"
         />
       </div>
     </>

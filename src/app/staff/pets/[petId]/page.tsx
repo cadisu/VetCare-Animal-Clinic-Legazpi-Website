@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { PetProfile } from "@/components/pets/PetProfile";
 import { requireRole } from "@/lib/auth/session";
 import { isUuid, PET_COLUMNS, type Pet } from "@/lib/pets/constants";
+import { listAppointmentsForPet } from "@/lib/appointments/server";
 import { getPetImageUrls } from "@/lib/pets/server";
 import { createClient } from "@/lib/supabase/server";
 
@@ -20,13 +21,14 @@ export default async function StaffPetPage({ params }: { params: Promise<{ petId
   if (!data) notFound();
   const pet = data as Pet;
 
-  const [{ data: owner }, imageUrls] = await Promise.all([
+  const [{ data: owner }, imageUrls, appointmentHistory] = await Promise.all([
     supabase
       .from("profiles")
       .select("id, full_name, contact_number")
       .eq("id", pet.owner_id)
       .maybeSingle(),
     getPetImageUrls(supabase, [pet.image_path]),
+    listAppointmentsForPet(supabase, pet.id),
   ]);
 
   return (
@@ -51,6 +53,7 @@ export default async function StaffPetPage({ params }: { params: Promise<{ petId
               "—"
             )
           }
+          appointmentHistory={appointmentHistory}
         />
       </div>
     </>

@@ -24,9 +24,8 @@ export const clinic = {
     email: "hello@vetcare-clinic.example", // PLACEHOLDER
   },
   hours: [
-    { days: "Monday - Friday", time: "9:00 AM - 6:00 PM" },
-    { days: "Saturday", time: "9:00 AM - 4:00 PM" },
-    { days: "Sunday", time: "Closed" },
+    { days: "Monday - Saturday", time: "9:00 AM - 6:00 PM" },
+    { days: "Sunday", time: "9:00 AM - 4:00 PM" },
   ], // PLACEHOLDER
   copyrightHolder: "VetCare Veterinary Clinic", // PLACEHOLDER
 } as const;

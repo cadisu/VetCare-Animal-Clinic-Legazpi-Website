@@ -9,10 +9,12 @@ export default async function StaffLayout({ children }: { children: React.ReactN
       ? [
           { href: "/senior-vet", label: "Senior Vet Dashboard" },
           { href: "/staff", label: "Staff Dashboard", exact: true },
+          { href: "/staff/appointments", label: "Appointments" },
           { href: "/staff/clients", label: "Clients" },
         ]
       : [
           { href: "/staff", label: "Dashboard", exact: true },
+          { href: "/staff/appointments", label: "Appointments" },
           { href: "/staff/clients", label: "Clients" },
         ];
 
