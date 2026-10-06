@@ -1,4 +1,7 @@
+import Link from "next/link";
+import { AppointmentStatusBadge } from "@/components/appointments/AppointmentStatusBadge";
 import { PlaceholderCard } from "@/components/portal/PlaceholderCard";
+import { formatTime12, type AppointmentListRow } from "@/lib/appointments/constants";
 import { formatAge, formatDate } from "@/lib/dates";
 import { PET_GENDER_LABELS, petCode, speciesLabel, type Pet } from "@/lib/pets/constants";
 import { PetAvatar } from "./PetAvatar";
@@ -18,12 +21,16 @@ export function PetProfile({
   imageUrl,
   ownerName,
   actions,
+  appointmentHistory,
+  appointmentsHref,
 }: {
   pet: Pet;
   imageUrl?: string;
   /** Shown to Staff/Senior Vet. */
   ownerName?: React.ReactNode;
   actions?: React.ReactNode;
+  appointmentHistory?: AppointmentListRow[];
+  appointmentsHref?: string;
 }) {
   const age = formatAge(pet.birth_date);
 
@@ -83,10 +90,37 @@ export function PetProfile({
           title="Clinical Records"
           description="Consultation and treatment records will appear here."
         />
-        <PlaceholderCard
-          title="Appointment History"
-          description="Past and upcoming appointments for this pet will appear here."
-        />
+        {appointmentHistory && appointmentHistory.length > 0 ? (
+          <section className="rounded-2xl border border-slate-200 bg-white p-6 md:col-span-2">
+            <h2 className="text-base font-semibold text-slate-900">Appointment history</h2>
+            <ul className="mt-4 space-y-3">
+              {appointmentHistory.map((a) => (
+                <li
+                  key={a.id}
+                  className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-slate-100 px-3 py-2 text-sm"
+                >
+                  <div>
+                    <p className="font-medium">{a.service.name}</p>
+                    <p className="text-slate-600">
+                      {formatDate(a.slot.slot_date)} · {formatTime12(a.slot.start_time)}
+                    </p>
+                  </div>
+                  <AppointmentStatusBadge status={a.status} />
+                </li>
+              ))}
+            </ul>
+            {appointmentsHref && (
+              <Link href={appointmentsHref} className="mt-4 inline-block text-sm font-semibold text-brand hover:underline">
+                View all appointments
+              </Link>
+            )}
+          </section>
+        ) : (
+          <PlaceholderCard
+            title="Appointment History"
+            description="Past and upcoming appointments for this pet will appear here."
+          />
+        )}
       </div>
     </div>
   );
