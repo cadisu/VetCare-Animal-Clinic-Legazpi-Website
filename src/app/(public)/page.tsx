@@ -75,8 +75,8 @@ export default async function HomePage() {
           <SectionHeading
             center
             eyebrow="Our Services"
-            title="Services you can book"
-            description="The same services available when you book an appointment."
+            title="Featured Services"
+            description="Everything your pet needs, under one roof."
           />
           {bookableServices.length === 0 ? (
             <p className="mt-12 text-center text-slate-600">Services will be listed here soon.</p>
