@@ -57,6 +57,7 @@ export async function fetchAvailability(
   veterinarianId: string | null,
   from?: string,
   to?: string,
+  petId?: string | null,
 ): Promise<AvailabilityRow[]> {
   const range = bookingDateRange();
   const { data, error } = await supabase.rpc("get_availability", {
@@ -64,6 +65,7 @@ export async function fetchAvailability(
     p_veterinarian_id: veterinarianId,
     p_from: from ?? range.from,
     p_to: to ?? range.to,
+    p_pet_id: petId ?? null,
   });
   if (error) throw error;
   return (data ?? []) as AvailabilityRow[];

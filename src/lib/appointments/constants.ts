@@ -14,8 +14,13 @@ export const APPOINTMENT_STATUSES = [
 ] as const;
 export type AppointmentStatus = (typeof APPOINTMENT_STATUSES)[number];
 
-export const SLOT_STATES = ["AVAILABLE", "FULL", "BLOCKED", "UNAVAILABLE"] as const;
+export const SLOT_STATES = ["AVAILABLE", "FULL", "BLOCKED", "UNAVAILABLE", "ALREADY_BOOKED"] as const;
 export type SlotState = (typeof SLOT_STATES)[number];
+
+export function slotStateLabel(state: SlotState | string): string {
+  if (state === "ALREADY_BOOKED") return "Already booked";
+  return state;
+}
 
 export const STATUS_LABELS: Record<AppointmentStatus, string> = {
   PENDING: "Pending",

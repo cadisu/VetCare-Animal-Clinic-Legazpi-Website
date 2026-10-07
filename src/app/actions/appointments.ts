@@ -15,6 +15,9 @@ const GENERIC = "Something went wrong. Please try again.";
 
 function rpcMessage(error: { message?: string } | null): string {
   const msg = error?.message ?? "";
+  if (msg.includes("already has an appointment") || msg.includes("appointments_pet_slot_active_idx")) {
+    return "This pet already has an appointment at that date and time.";
+  }
   if (msg.includes("full")) return "This time slot is already full. Please choose another.";
   if (msg.includes("past")) return "That time has passed. Please choose a later slot.";
   if (msg.includes("Not authorized")) return "You are not allowed to perform this action.";
@@ -97,9 +100,11 @@ export async function createStaffAppointmentAction(
 export async function fetchBookingAvailabilityAction(
   serviceId: string,
   veterinarianId: string | null,
+  petId: string,
 ): Promise<{ availability: AvailabilityRow[] } | { error: string }> {
-  await requireRole(["CLIENT"]);
+  const profile = await requireRole(["CLIENT"]);
   if (!isUuid(serviceId)) return { error: "Invalid service." };
+  if (!isUuid(petId)) return { error: "Select a pet." };
 
   const supabase = await createClient();
   const { data: service } = await supabase
@@ -112,6 +117,15 @@ export async function fetchBookingAvailabilityAction(
     return { error: "Service is not available for booking." };
   }
 
+  const { data: pet } = await supabase
+    .from("pets")
+    .select("id")
+    .eq("id", petId)
+    .eq("owner_id", profile.id)
+    .eq("is_archived", false)
+    .maybeSingle();
+  if (!pet) return { error: "Select a pet." };
+
   let vetId: string | null = veterinarianId;
   if (service.requires_veterinarian) {
     if (!vetId || !isUuid(vetId)) return { error: "Select a veterinarian." };
@@ -120,7 +134,7 @@ export async function fetchBookingAvailabilityAction(
   }
 
   try {
-    const availability = await fetchAvailability(supabase, serviceId, vetId);
+    const availability = await fetchAvailability(supabase, serviceId, vetId, undefined, undefined, petId);
     return { availability };
   } catch {
     return { error: GENERIC };

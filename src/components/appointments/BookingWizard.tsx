@@ -18,7 +18,7 @@ import { SubmitButton } from "@/components/ui/SubmitButton";
 import { buttonClass } from "@/components/ui/button-styles";
 import { BOOKING_WINDOW_DAYS } from "@/lib/appointments/constants";
 import type { AvailabilityRow, ServiceRow, VeterinarianRow } from "@/lib/appointments/constants";
-import { formatTime12 } from "@/lib/appointments/constants";
+import { formatTime12, slotStateLabel } from "@/lib/appointments/constants";
 import { todayIso } from "@/lib/dates";
 import type { Pet } from "@/lib/pets/constants";
 
@@ -65,13 +65,14 @@ export function BookingWizard({
   const [state, formAction] = useActionState(bookAppointmentAction, initial);
 
   const service = services.find((s) => s.id === serviceId);
+  const needsVet = Boolean(service?.requires_veterinarian);
   const minDate = todayIso();
   const maxDate = bookingMaxDateIso(BOOKING_WINDOW_DAYS);
 
-  const loadAvailability = useCallback(async (sid: string, vid: string | null) => {
+  const loadAvailability = useCallback(async (sid: string, vid: string | null, pid: string) => {
     setLoadingAvailability(true);
     setAvailabilityError(null);
-    const result = await fetchBookingAvailabilityAction(sid, vid);
+    const result = await fetchBookingAvailabilityAction(sid, vid, pid);
     setLoadingAvailability(false);
     if ("error" in result) {
       setAvailability([]);
@@ -82,15 +83,15 @@ export function BookingWizard({
   }, []);
 
   useEffect(() => {
-    if (!serviceId) return;
+    if (!serviceId || !petId) return;
     const svc = services.find((s) => s.id === serviceId);
     const effectiveVet = svc?.requires_veterinarian ? vetId : null;
     if (svc?.requires_veterinarian && !effectiveVet) {
       setAvailability([]);
       return;
     }
-    void loadAvailability(serviceId, effectiveVet);
-  }, [serviceId, vetId, services, loadAvailability]);
+    void loadAvailability(serviceId, effectiveVet, petId);
+  }, [serviceId, vetId, petId, services, loadAvailability]);
 
   useEffect(() => {
     if (!date) return;
@@ -102,6 +103,12 @@ export function BookingWizard({
       setSlotId("");
     }
   }, [availability, date]);
+
+  useEffect(() => {
+    if (!slotId) return;
+    const selected = availability.find((a) => a.slot_id === slotId);
+    if (!selected || selected.slot_state !== "AVAILABLE") setSlotId("");
+  }, [availability, slotId]);
 
   const availableDates = useMemo(() => {
     const set = new Set<string>();
@@ -174,7 +181,7 @@ export function BookingWizard({
         <input type="hidden" name="serviceId" value={serviceId} />
       </section>
 
-      {service?.requires_veterinarian && (
+      {needsVet && (
         <section className="rounded-2xl border border-slate-200 bg-white p-6">
           <h2 className="text-base font-semibold">2. Veterinarian</h2>
           <div className="mt-4 flex flex-wrap gap-2">
@@ -194,7 +201,23 @@ export function BookingWizard({
       )}
 
       <section className="rounded-2xl border border-slate-200 bg-white p-6">
-        <h2 className="text-base font-semibold">{service?.requires_veterinarian ? "3" : "2"}. Date</h2>
+        <h2 className="text-base font-semibold">{needsVet ? "3" : "2"}. Pet</h2>
+        <select
+          name="petId"
+          value={petId}
+          onChange={(e) => setPetId(e.target.value)}
+          className="mt-4 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+        >
+          {pets.map((p) => (
+            <option key={p.id} value={p.id}>
+              {p.name}
+            </option>
+          ))}
+        </select>
+      </section>
+
+      <section className="rounded-2xl border border-slate-200 bg-white p-6">
+        <h2 className="text-base font-semibold">{needsVet ? "4" : "3"}. Date</h2>
         {loadingAvailability && (
           <p className="mt-3 text-sm text-slate-600">Loading available dates…</p>
         )}
@@ -220,7 +243,7 @@ export function BookingWizard({
 
       {date && !loadingAvailability && (
         <section className="rounded-2xl border border-slate-200 bg-white p-6">
-          <h2 className="text-base font-semibold">{service?.requires_veterinarian ? "4" : "3"}. Time</h2>
+          <h2 className="text-base font-semibold">{needsVet ? "5" : "4"}. Time</h2>
           <ul className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
             {timesForDate.map((t) => {
               const selectable = t.slot_state === "AVAILABLE";
@@ -240,7 +263,7 @@ export function BookingWizard({
                   >
                     <span className="font-semibold">{formatTime12(t.start_time)}</span>
                     <span className="mt-1 block text-xs">
-                      {t.slot_state} · {t.booked_count}/{t.capacity}
+                      {slotStateLabel(t.slot_state)} · {t.booked_count}/{t.capacity}
                     </span>
                     {t.requires_vet_acceptance && selectable && (
                       <span className="mt-1 block text-xs text-amber-800">Requires vet acceptance</span>
@@ -255,22 +278,8 @@ export function BookingWizard({
       )}
 
       <section className="rounded-2xl border border-slate-200 bg-white p-6">
-        <h2 className="text-base font-semibold">
-          {service?.requires_veterinarian ? "5" : "4"}. Pet & confirm
-        </h2>
-        <select
-          name="petId"
-          value={petId}
-          onChange={(e) => setPetId(e.target.value)}
-          className="mt-4 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
-        >
-          {pets.map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.name}
-            </option>
-          ))}
-        </select>
-        <SubmitButton className="mt-6">Confirm booking</SubmitButton>
+        <h2 className="text-base font-semibold">{needsVet ? "6" : "5"}. Confirm</h2>
+        <SubmitButton className="mt-4">Confirm booking</SubmitButton>
       </section>
     </form>
   );
