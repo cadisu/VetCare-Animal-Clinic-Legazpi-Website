@@ -9,9 +9,9 @@ const SERVICE_IMAGE_FILES: Partial<Record<string, string>> = {
   consultation: "consultationImage.jpg",
   "multivalent-vaccine": "multivalent.jpg",
   "anti-rabies-vaccine": "antiRabies2.jpg",
-  "deworming": "deworming.jpg",
+  "deworming": "Deworming.jpg",
   "tick-and-flea-heartworm-prevention": "tick and flea prevention.jpg",
-  "grooming": "grooming.jpg",
+  "grooming": "Grooming.jpg",
   "surgery": "surgery.jpg"
 };
 
