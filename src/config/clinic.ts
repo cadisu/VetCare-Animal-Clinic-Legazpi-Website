@@ -30,52 +30,6 @@ export const clinic = {
   copyrightHolder: "VetCare Veterinary Clinic", // PLACEHOLDER
 } as const;
 
-export type ServiceItem = {
-  name: string;
-  description: string;
-  details: string;
-  featured: boolean;
-};
-
-// PLACEHOLDER services. In a later phase services become configurable by the Senior Vet.
-export const services: ServiceItem[] = [
-  {
-    name: "Veterinary Consultation",
-    description: "Thorough check-ups and expert advice for your pet's health concerns.",
-    details:
-      "A one-on-one consultation with our veterinarian to assess your pet, answer your questions, and recommend the right care plan.",
-    featured: true,
-  },
-  {
-    name: "Vaccination",
-    description: "Core and optional vaccines to protect your pet from preventable disease.",
-    details:
-      "Age-appropriate vaccination schedules, with reminders so your pet stays protected year-round.",
-    featured: true,
-  },
-  {
-    name: "Grooming",
-    description: "Bathing, trimming and coat care in a calm, pet-friendly space.",
-    details:
-      "Gentle grooming services that keep your pet clean, comfortable and healthy, from baths to haircuts.",
-    featured: true,
-  },
-  {
-    name: "Deworming",
-    description: "Safe, effective parasite control for puppies, kittens and adults.",
-    details:
-      "Regular deworming to protect your pet and your household from intestinal parasites.",
-    featured: true,
-  },
-  {
-    name: "Wellness Check",
-    description: "Routine examinations that catch small issues before they grow.",
-    details:
-      "A complete preventive health review, including weight monitoring and personalized care recommendations.",
-    featured: true,
-  },
-];
-
 export const whyChooseUs = [
   {
     title: "Compassionate Care",

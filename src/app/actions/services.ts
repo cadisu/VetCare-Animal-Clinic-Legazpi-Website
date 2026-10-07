@@ -60,5 +60,7 @@ export async function upsertServiceAction(_prev: FormState, formData: FormData):
   }
 
   revalidatePath("/senior-vet/services");
+  revalidatePath("/");
+  revalidatePath("/services");
   redirect("/senior-vet/services");
 }

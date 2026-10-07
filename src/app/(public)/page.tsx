@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { clinic, services, team, whyChooseUs } from "@/config/clinic";
+import { clinic, team, whyChooseUs } from "@/config/clinic";
+import { ServiceCard } from "@/components/public/ServiceCard";
 import { SectionHeading } from "@/components/public/PageHeader";
 import { TeamCard } from "@/components/public/TeamCard";
 import { buttonClass } from "@/components/ui/button-styles";
@@ -9,16 +10,18 @@ import {
   FolderIcon,
   HeartIcon,
   MailIcon,
-  PawIcon,
   PhoneIcon,
   PinIcon,
   ShieldIcon,
 } from "@/components/ui/icons";
+import { listBookableServices } from "@/lib/appointments/server";
+import { createClient } from "@/lib/supabase/server";
 
 const whyIcons = [HeartIcon, ShieldIcon, CalendarIcon, FolderIcon];
 
-export default function HomePage() {
-  const featured = services.filter((s) => s.featured);
+export default async function HomePage() {
+  const supabase = await createClient();
+  const bookableServices = await listBookableServices(supabase);
 
   return (
     <>
@@ -72,23 +75,20 @@ export default function HomePage() {
           <SectionHeading
             center
             eyebrow="Our Services"
-            title="Featured services"
-            description="Everything your pet needs, under one roof."
+            title="Services you can book"
+            description="The same services available when you book an appointment."
           />
-          <ul className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {featured.map((service) => (
-              <li
-                key={service.name}
-                className="rounded-2xl border border-slate-200 bg-white p-6"
-              >
-                <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-soft text-brand">
-                  <PawIcon className="h-6 w-6" />
-                </span>
-                <h3 className="mt-4 text-lg font-semibold">{service.name}</h3>
-                <p className="mt-2 text-slate-600">{service.description}</p>
-              </li>
-            ))}
-          </ul>
+          {bookableServices.length === 0 ? (
+            <p className="mt-12 text-center text-slate-600">Services will be listed here soon.</p>
+          ) : (
+            <ul className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {bookableServices.map((service) => (
+                <li key={service.id}>
+                  <ServiceCard name={service.name} description={service.description} headingLevel="h3" />
+                </li>
+              ))}
+            </ul>
+          )}
           <div className="mt-10 text-center">
             <Link href="/services" className={buttonClass("outline")}>
               See all services
