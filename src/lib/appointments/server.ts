@@ -96,32 +96,78 @@ export function splitClientAppointments(appointments: AppointmentListRow[]) {
   };
 }
 
-export async function listUpcomingAppointmentsForVeterinarianProfile(
+/** profiles.id → veterinarians.profile_id → veterinarians.id (assigned vet on appointment_slots). */
+export async function getVeterinarianIdForProfile(
   supabase: SupabaseClient,
   profileId: string,
-): Promise<(AppointmentListRow & { client?: { full_name: string } })[]> {
+): Promise<string | null> {
   const { data: vet } = await supabase
     .from("veterinarians")
     .select("id")
     .eq("profile_id", profileId)
     .maybeSingle();
-  if (!vet) return [];
+  return vet?.id ?? null;
+}
 
-  const { data: slots } = await supabase
-    .from("appointment_slots")
-    .select("id")
-    .eq("veterinarian_id", vet.id);
-  const slotIds = (slots ?? []).map((s) => s.id);
+const SLOT_ID_PAGE_SIZE = 1000;
+const APPOINTMENTS_IN_CHUNK = 150;
+
+type AppointmentListRowWithClient = AppointmentListRow & { client?: { full_name: string } };
+
+async function listSlotIdsForVeterinarianFromDate(
+  supabase: SupabaseClient,
+  veterinarianId: string,
+  fromDate: string,
+): Promise<string[]> {
+  const ids: string[] = [];
+  let from = 0;
+  for (;;) {
+    const to = from + SLOT_ID_PAGE_SIZE - 1;
+    const { data, error } = await supabase
+      .from("appointment_slots")
+      .select("id")
+      .eq("veterinarian_id", veterinarianId)
+      .gte("slot_date", fromDate)
+      .order("slot_date", { ascending: true })
+      .order("start_time", { ascending: true })
+      .range(from, to);
+    if (error) throw error;
+    const page = (data ?? []).map((s) => s.id);
+    ids.push(...page);
+    if (page.length < SLOT_ID_PAGE_SIZE) break;
+    from += SLOT_ID_PAGE_SIZE;
+  }
+  return ids;
+}
+
+async function listAppointmentsForSlotIds(
+  supabase: SupabaseClient,
+  slotIds: string[],
+): Promise<AppointmentListRowWithClient[]> {
+  const rows: AppointmentListRowWithClient[] = [];
+  for (let i = 0; i < slotIds.length; i += APPOINTMENTS_IN_CHUNK) {
+    const chunk = slotIds.slice(i, i + APPOINTMENTS_IN_CHUNK);
+    const { data, error } = await supabase
+      .from("appointments")
+      .select(`${APPOINTMENT_LIST_SELECT}, client:profiles!appointments_client_id_fkey ( full_name )`)
+      .in("slot_id", chunk);
+    if (error) throw error;
+    rows.push(...((data ?? []) as unknown as AppointmentListRowWithClient[]));
+  }
+  return rows;
+}
+
+export async function listUpcomingAppointmentsForVeterinarianProfile(
+  supabase: SupabaseClient,
+  profileId: string,
+): Promise<AppointmentListRowWithClient[]> {
+  const veterinarianId = await getVeterinarianIdForProfile(supabase, profileId);
+  if (!veterinarianId) return [];
+
+  const slotIds = await listSlotIdsForVeterinarianFromDate(supabase, veterinarianId, todayIso());
   if (slotIds.length === 0) return [];
 
-  const { data } = await supabase
-    .from("appointments")
-    .select(`${APPOINTMENT_LIST_SELECT}, client:profiles!appointments_client_id_fkey ( full_name )`)
-    .in("slot_id", slotIds);
-
-  const rows = (data ?? []) as unknown as (AppointmentListRow & {
-    client?: { full_name: string };
-  })[];
+  const rows = await listAppointmentsForSlotIds(supabase, slotIds);
 
   return rows
     .filter((a) => isClientUpcomingAppointment(a.slot.slot_date, a.slot.start_time, a.status))

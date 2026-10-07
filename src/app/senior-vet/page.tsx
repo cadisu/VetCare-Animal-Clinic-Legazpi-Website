@@ -3,7 +3,11 @@ import Link from "next/link";
 import { AppointmentCard } from "@/components/appointments/AppointmentCard";
 import { DashboardHeading, PlaceholderCard } from "@/components/portal/PlaceholderCard";
 import { VetUpcomingPreview } from "@/components/appointments/VetUpcomingPreview";
-import { listAppointmentsForDay, listUpcomingAppointmentsForVeterinarianProfile } from "@/lib/appointments/server";
+import {
+  getVeterinarianIdForProfile,
+  listAppointmentsForDay,
+  listUpcomingAppointmentsForVeterinarianProfile,
+} from "@/lib/appointments/server";
 import { requireRole } from "@/lib/auth/session";
 import { todayIso } from "@/lib/dates";
 import { createClient } from "@/lib/supabase/server";
@@ -15,8 +19,9 @@ export default async function SeniorVetDashboardPage() {
   const firstName = profile.first_name || "Doc";
   const today = todayIso();
   const supabase = await createClient();
-  const [todayAppointments, myUpcoming] = await Promise.all([
+  const [todayAppointments, veterinarianId, myUpcoming] = await Promise.all([
     listAppointmentsForDay(supabase, today),
+    getVeterinarianIdForProfile(supabase, profile.id),
     listUpcomingAppointmentsForVeterinarianProfile(supabase, profile.id),
   ]);
 
@@ -50,6 +55,14 @@ export default async function SeniorVetDashboardPage() {
           <p className="mt-1 text-sm text-slate-600">
             Visits where you are the selected veterinarian (including future dates).
           </p>
+          {!veterinarianId && (
+            <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+              Your login is not linked to a veterinarian record, so assigned visits cannot be listed here.
+              Ask an administrator to run{" "}
+              <code className="text-xs">create-privileged-user</code> with{" "}
+              <code className="text-xs">--veterinarian-id</code> for your account.
+            </p>
+          )}
           <VetUpcomingPreview appointments={myUpcoming} />
         </section>
         <PlaceholderCard
