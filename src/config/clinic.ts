@@ -52,31 +52,17 @@ export const whyChooseUs = [
 export type TeamMember = {
   name: string;
   title: string;
-  bio: string;
 };
 
-// PLACEHOLDER team members (no real people or photos yet).
 export const team: TeamMember[] = [
-  {
-    name: "Dr. Alex Sample",
-    title: "Senior Veterinarian",
-    bio: "Leads the clinic's medical team with a focus on preventive care and client education.",
-  },
-  {
-    name: "Dr. Jamie Placeholder",
-    title: "Veterinarian",
-    bio: "Passionate about small-animal medicine, vaccinations and wellness care.",
-  },
-  {
-    name: "Taylor Example",
-    title: "Veterinary Technician",
-    bio: "Assists with examinations and helps every pet feel calm and comfortable.",
-  },
-  {
-    name: "Morgan Demo",
-    title: "Clinic Receptionist",
-    bio: "Your friendly first point of contact for appointments and questions.",
-  },
+  { name: "Dr. Carmela Dawn R. De Guzman, DVM", title: "Veterinarian" },
+  { name: "Dr. Merlyn P. Castelo, DVM", title: "Veterinarian" },
+  { name: "Dr. John Kenneth P. Adan, DVM", title: "Veterinarian" },
+  { name: "Fyona Mari Basco", title: "Veterinary Intern" },
+  { name: "Katrina V. Barra", title: "Veterinary Intern" },
+  { name: "Renz Mark", title: "Veterinary Assistant" },
+  { name: "RK Marie Amor", title: "Clinic Receptionist" },
+  { name: "Steve-O Bradley", title: "Employee Cat of the Month" },
 ];
 
 export const publicNavLinks = [

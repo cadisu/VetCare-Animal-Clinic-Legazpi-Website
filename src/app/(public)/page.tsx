@@ -125,9 +125,9 @@ export default async function HomePage() {
             title="Meet Our Veterinary Team"
             description="Friendly, experienced professionals who love animals."
           />
-          <ul className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          <ul className="mt-12 flex snap-x gap-6 overflow-x-auto pb-2">
             {team.map((member) => (
-              <li key={member.name}>
+              <li key={member.name} className="w-64 shrink-0 snap-start">
                 <TeamCard member={member} />
               </li>
             ))}

@@ -10,7 +10,7 @@ export default function VeterinaryTeamPage() {
     <>
       <PageHeader
         title="Meet Our Veterinary Team"
-        description="The people who care for your pets every day. (Placeholder profiles, to be replaced with the real team.)"
+        description="The people who care for your pets every day."
       />
       <section className="mx-auto max-w-7xl px-4 py-14 sm:px-6 sm:py-16 lg:px-8">
         <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
