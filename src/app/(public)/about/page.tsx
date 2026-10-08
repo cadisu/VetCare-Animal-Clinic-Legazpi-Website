@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { clinic } from "@/config/clinic";
+import { ContactDetails } from "@/components/public/ContactDetails";
 import { PageHeader } from "@/components/public/PageHeader";
-import { ClockIcon, MailIcon, PhoneIcon, PinIcon } from "@/components/ui/icons";
+import { ClockIcon } from "@/components/ui/icons";
 
 export const metadata: Metadata = { title: "About Us" };
 
@@ -38,22 +39,7 @@ export default function AboutPage() {
             </div>
             <div className="rounded-2xl border border-slate-200 p-6 sm:p-8">
               <h2 className="text-xl font-bold">Visit or contact us</h2>
-              <ul className="mt-4 space-y-4">
-                <li className="flex gap-3">
-                  <PinIcon className="mt-0.5 h-5 w-5 shrink-0 text-brand" />
-                  <span>{clinic.contact.address}</span>
-                </li>
-                <li className="flex gap-3">
-                  <PhoneIcon className="mt-0.5 h-5 w-5 shrink-0 text-brand" />
-                  <span>
-                    {clinic.contact.phone} / {clinic.contact.mobile}
-                  </span>
-                </li>
-                <li className="flex gap-3">
-                  <MailIcon className="mt-0.5 h-5 w-5 shrink-0 text-brand" />
-                  <span className="break-all">{clinic.contact.email}</span>
-                </li>
-              </ul>
+              <ContactDetails className="mt-4 space-y-4" />
             </div>
           </div>
         </div>

@@ -4,16 +4,8 @@ import { ServiceCard } from "@/components/public/ServiceCard";
 import { SectionHeading } from "@/components/public/PageHeader";
 import { TeamCard } from "@/components/public/TeamCard";
 import { buttonClass } from "@/components/ui/button-styles";
-import {
-  CalendarIcon,
-  ClockIcon,
-  FolderIcon,
-  HeartIcon,
-  MailIcon,
-  PhoneIcon,
-  PinIcon,
-  ShieldIcon,
-} from "@/components/ui/icons";
+import { ContactDetails } from "@/components/public/ContactDetails";
+import { CalendarIcon, ClockIcon, FolderIcon, HeartIcon, ShieldIcon } from "@/components/ui/icons";
 import { listBookableServices } from "@/lib/appointments/server";
 import { createClient } from "@/lib/supabase/server";
 
@@ -159,22 +151,7 @@ export default async function HomePage() {
 
           <div className="rounded-2xl border border-slate-200 p-6 sm:p-8">
             <h2 className="text-xl font-bold">Contact Information</h2>
-            <ul className="mt-6 space-y-4">
-              <li className="flex gap-3">
-                <PinIcon className="mt-0.5 h-5 w-5 shrink-0 text-brand" />
-                <span>{clinic.contact.address}</span>
-              </li>
-              <li className="flex gap-3">
-                <PhoneIcon className="mt-0.5 h-5 w-5 shrink-0 text-brand" />
-                <span>
-                  {clinic.contact.phone} / {clinic.contact.mobile}
-                </span>
-              </li>
-              <li className="flex gap-3">
-                <MailIcon className="mt-0.5 h-5 w-5 shrink-0 text-brand" />
-                <span className="break-all">{clinic.contact.email}</span>
-              </li>
-            </ul>
+            <ContactDetails />
           </div>
         </div>
       </section>

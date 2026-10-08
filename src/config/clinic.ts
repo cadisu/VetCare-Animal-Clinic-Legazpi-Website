@@ -18,11 +18,28 @@ export const clinic = {
       "To provide accessible, compassionate veterinary care that keeps pets healthy and families connected to the clinic through convenient, reliable service.", // PLACEHOLDER
   },
   contact: {
-    address: "123 Sample Street, Barangay Placeholder, Sample City, Philippines", // PLACEHOLDER
-    phone: "(000) 123-4567", // PLACEHOLDER
-    mobile: "0900 000 0000", // PLACEHOLDER
-    email: "hello@vetcare-clinic.example", // PLACEHOLDER
+    address:
+      "Ground Floor Pag-asa Building, Rizal Street, Barangay 15 Ilawod East, Legazpi, Philippines, 4500",
+    phone: "0948 870 7946",
+    email: "vetcare.aclinic@gmail.com",
   },
+  socials: [
+    {
+      label: "Facebook",
+      href: "https://www.facebook.com/vetcareac.legazpi",
+      icon: "/icons/facebook_icon.png",
+    },
+    {
+      label: "Instagram",
+      href: "https://www.instagram.com/vetcare.aclinic",
+      icon: "/icons/instagram.png",
+    },
+    {
+      label: "TikTok",
+      href: "https://www.tiktok.com/@vetcareanimalclinic",
+      icon: "/icons/tik-tok.png",
+    },
+  ],
   hours: [
     { days: "Monday - Saturday", time: "9:00 AM - 6:00 PM" },
     { days: "Sunday", time: "9:00 AM - 4:00 PM" },

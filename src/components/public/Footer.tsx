@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { clinic, publicNavLinks } from "@/config/clinic";
-import { MailIcon, PhoneIcon, PinIcon } from "@/components/ui/icons";
+import { ContactDetails } from "@/components/public/ContactDetails";
 import { Logo } from "@/components/ui/Logo";
 
 export function Footer() {
@@ -37,22 +37,7 @@ export function Footer() {
 
         <div>
           <h2 className="text-sm font-semibold uppercase tracking-wider text-white">Contact</h2>
-          <ul className="mt-4 space-y-3 text-sm">
-            <li className="flex gap-3">
-              <PinIcon className="mt-0.5 h-5 w-5 shrink-0" />
-              <span>{clinic.contact.address}</span>
-            </li>
-            <li className="flex gap-3">
-              <PhoneIcon className="mt-0.5 h-5 w-5 shrink-0" />
-              <span>
-                {clinic.contact.phone} / {clinic.contact.mobile}
-              </span>
-            </li>
-            <li className="flex gap-3">
-              <MailIcon className="mt-0.5 h-5 w-5 shrink-0" />
-              <span className="break-all">{clinic.contact.email}</span>
-            </li>
-          </ul>
+          <ContactDetails variant="footer" />
         </div>
       </div>
 
