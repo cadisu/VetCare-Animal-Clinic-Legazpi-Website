@@ -1,7 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { AppointmentCard } from "@/components/appointments/AppointmentCard";
-import { DashboardHeading } from "@/components/portal/PlaceholderCard";
 import { buttonClass } from "@/components/ui/button-styles";
 import { FormField } from "@/components/ui/FormField";
 import { Alert } from "@/components/ui/Alert";
@@ -28,36 +26,29 @@ export default async function StaffAppointmentsPage({
 
   return (
     <>
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <DashboardHeading title="Appointment schedule" subtitle={`Day view for ${day}.`} />
-        <div className="flex flex-wrap gap-2">
-          <Link href="/staff/appointments/new" className={buttonClass("primary", "md")}>
-            Walk-in / book
-          </Link>
-          <Link href="/staff/appointments/slots" className={buttonClass("outline", "md")}>
-            Manage slots
-          </Link>
-        </div>
-      </div>
+      <h2 className="text-lg font-semibold text-ink">Appointment schedule</h2>
+      <p className="mt-1 text-sm text-muted">Day view for {day}.</p>
 
       {params.completed === "1" && (
-        <Alert variant="success" >
-          Appointment marked as completed.
-        </Alert>
+        <div className="mt-4">
+          <Alert variant="success">Appointment marked as completed.</Alert>
+        </div>
       )}
       {params.completeError && (
-        <Alert variant="error">{params.completeError}</Alert>
+        <div className="mt-4">
+          <Alert variant="error">{params.completeError}</Alert>
+        </div>
       )}
 
       <form method="get" className="mt-6 flex flex-wrap items-end gap-3">
         <FormField label="Date" name="day" type="date" defaultValue={day} className="w-auto" />
         <FormField label="Search" name="q" type="search" defaultValue={params.q ?? ""} className="min-w-[12rem]" />
         <div>
-          <label className="mb-1.5 block text-sm font-medium text-slate-800">Source</label>
+          <label className="mb-1.5 block text-sm font-medium text-ink">Source</label>
           <select
             name="source"
             defaultValue={params.source ?? ""}
-            className="min-h-11 rounded-lg border border-slate-300 px-3 text-sm"
+            className="min-h-11 rounded-lg border border-line px-3 text-sm"
           >
             <option value="">All</option>
             <option value="APPOINTMENT">Appointment</option>
@@ -71,7 +62,7 @@ export default async function StaffAppointmentsPage({
 
       <ul className="mt-8 space-y-3">
         {appointments.length === 0 ? (
-          <li className="text-sm text-slate-600">No appointments for this day.</li>
+          <li className="text-sm text-muted">No appointments for this day.</li>
         ) : (
           appointments.map((a) => (
             <li key={a.id}>

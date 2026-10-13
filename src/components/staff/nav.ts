@@ -7,6 +7,7 @@ export const STAFF_NAV: readonly DashboardNavItem[] = [
     href: "/staff/appointments",
     label: "Appointments",
     icon: CalendarIcon,
+    alsoActive: ["/staff/appointments/log"],
   },
   {
     href: "/staff/clients",

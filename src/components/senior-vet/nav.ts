@@ -20,7 +20,7 @@ export const SENIOR_VET_NAV: readonly DashboardNavItem[] = [
     href: "/senior-vet/appointments",
     label: "Appointments",
     icon: CalendarIcon,
-    alsoActive: ["/staff/appointments"],
+    alsoActive: ["/staff/appointments", "/staff/appointments/log"],
   },
   {
     href: "/staff/clients",
