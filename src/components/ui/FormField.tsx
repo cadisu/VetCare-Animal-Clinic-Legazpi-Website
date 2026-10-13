@@ -21,8 +21,8 @@ type SelectFieldProps = FieldBaseProps &
   Omit<SelectHTMLAttributes<HTMLSelectElement>, "name"> & { children: ReactNode };
 
 function controlClass(hasError: boolean, extra: string) {
-  return `block w-full rounded-lg border bg-white px-3.5 text-base text-slate-900 placeholder:text-slate-400 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30 ${
-    hasError ? "border-accent" : "border-slate-300"
+  return `block w-full rounded-lg border bg-white px-3.5 text-base text-ink placeholder:text-muted/70 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30 ${
+    hasError ? "border-accent" : "border-line"
   } ${extra}`;
 }
 
@@ -44,13 +44,13 @@ function FieldFrame({
   const hasError = Boolean(errors?.length);
   return (
     <div>
-      <label htmlFor={inputId} className="mb-1.5 block text-sm font-medium text-slate-800">
+      <label htmlFor={inputId} className="mb-1.5 block text-sm font-medium text-ink">
         {label}
-        {labelNote && <span className="ml-1 font-normal text-slate-500">{labelNote}</span>}
+        {labelNote && <span className="ml-1 font-normal text-muted">{labelNote}</span>}
       </label>
       {children}
       {hint && !hasError && (
-        <p id={`${inputId}-hint`} className="mt-1.5 text-xs text-slate-500">
+        <p id={`${inputId}-hint`} className="mt-1.5 text-xs text-muted">
           {hint}
         </p>
       )}

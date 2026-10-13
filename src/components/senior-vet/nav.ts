@@ -1,4 +1,3 @@
-import type { ComponentType, SVGProps } from "react";
 import {
   CalendarIcon,
   ClockIcon,
@@ -6,27 +5,16 @@ import {
   FolderIcon,
   UsersIcon,
 } from "@/components/ui/icons";
+import {
+  isDashboardNavActive,
+  type DashboardNavItem,
+  type DashboardShellProfile,
+} from "@/components/dashboard/types";
 
-export type SeniorVetShellProfile = {
-  fullName: string;
-  email: string;
-  firstName: string;
-  lastName: string;
-  avatarUrl: string | null;
-};
+export type SeniorVetShellProfile = DashboardShellProfile;
+export type SeniorVetNavItem = DashboardNavItem;
 
-type IconComponent = ComponentType<SVGProps<SVGSVGElement>>;
-
-export type SeniorVetNavItem = {
-  href: string;
-  label: string;
-  exact?: boolean;
-  icon: IconComponent;
-  /** Extra path prefixes that should keep this item active. */
-  alsoActive?: readonly string[];
-};
-
-export const SENIOR_VET_NAV: readonly SeniorVetNavItem[] = [
+export const SENIOR_VET_NAV: readonly DashboardNavItem[] = [
   { href: "/senior-vet", label: "Dashboard", exact: true, icon: DashboardIcon },
   {
     href: "/senior-vet/appointments",
@@ -44,10 +32,4 @@ export const SENIOR_VET_NAV: readonly SeniorVetNavItem[] = [
   { href: "/senior-vet/services", label: "Services", icon: FolderIcon },
 ];
 
-export function isSeniorVetNavActive(pathname: string, item: SeniorVetNavItem): boolean {
-  if (item.exact) return pathname === item.href;
-  if (pathname === item.href || pathname.startsWith(`${item.href}/`)) return true;
-  return (item.alsoActive ?? []).some(
-    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
-  );
-}
+export const isSeniorVetNavActive = isDashboardNavActive;

@@ -6,6 +6,7 @@ import { requireRole } from "@/lib/auth/session";
 import { formatDate } from "@/lib/dates";
 import { isUuid, PET_COLUMNS, type Pet } from "@/lib/pets/constants";
 import { getPetImageUrls } from "@/lib/pets/server";
+import { panelPaddingClass } from "@/components/ui/panel-styles";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = { title: "Client Details" };
@@ -56,7 +57,7 @@ export default async function StaffClientPage({
         ← Back to Clients
       </Link>
 
-      <section className="mt-4 rounded-2xl border border-slate-200 bg-white p-6">
+      <section className={panelPaddingClass("mt-4")}>
         <div className="flex flex-wrap items-center gap-3">
           <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
             {client.full_name || "(no name)"}

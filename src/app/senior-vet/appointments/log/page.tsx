@@ -4,6 +4,7 @@ import { AppointmentStatusBadge } from "@/components/appointments/AppointmentSta
 import { Alert } from "@/components/ui/Alert";
 import { buttonClass } from "@/components/ui/button-styles";
 import { FormField } from "@/components/ui/FormField";
+import { panelClass } from "@/components/ui/panel-styles";
 import {
   APPOINTMENT_LOG_PAGE_SIZE,
   listAppointmentLog,
@@ -71,8 +72,8 @@ export default async function SeniorVetAppointmentLogPage({
 
   return (
     <>
-      <h2 className="text-lg font-semibold text-slate-900">Appointment Log</h2>
-      <p className="mt-1 text-sm text-slate-600">
+      <h2 className="text-lg font-semibold text-ink">Appointment Log</h2>
+      <p className="mt-1 text-sm text-muted">
         Every recorded appointment, including completed and cancelled visits.
       </p>
 
@@ -122,9 +123,9 @@ export default async function SeniorVetAppointmentLogPage({
 
       {result && result.rows.length > 0 && (
         <>
-          <div className="mt-6 overflow-x-auto rounded-2xl border border-slate-200 bg-white">
+          <div className={panelClass("mt-6 overflow-x-auto")}>
             <table className="min-w-[56rem] w-full text-left text-sm">
-              <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+              <thead className="border-b border-line bg-highlight/50 text-xs uppercase tracking-wide text-muted">
                 <tr>
                   <th className="px-4 py-3 font-medium">Date</th>
                   <th className="px-4 py-3 font-medium">Time</th>

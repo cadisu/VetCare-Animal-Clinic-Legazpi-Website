@@ -16,16 +16,16 @@ export function PortalShell({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen bg-slate-50">
-      <header className="border-b border-slate-200 bg-white">
+    <div className="min-h-screen bg-canvas">
+      <header className="border-b border-line bg-white shadow-sm shadow-black/[0.03]">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 pt-3 sm:px-6 lg:px-8">
           <Logo href={ROLE_HOME[profile.role]} />
           <div className="flex items-center gap-3">
             <div className="hidden text-right sm:block">
-              <p className="text-sm font-semibold text-slate-900">
+              <p className="text-sm font-semibold text-ink">
                 {profile.full_name || profile.email}
               </p>
-              <p className="text-xs text-slate-500">{ROLE_LABELS[profile.role]}</p>
+              <p className="text-xs text-muted">{ROLE_LABELS[profile.role]}</p>
             </div>
             <form action={logoutAction}>
               <button type="submit" className={buttonClass("outline")}>

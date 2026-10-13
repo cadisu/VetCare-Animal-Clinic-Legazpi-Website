@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { DashboardHeading } from "@/components/portal/PlaceholderCard";
 import { buttonClass } from "@/components/ui/button-styles";
+import { panelClass } from "@/components/ui/panel-styles";
 import { requireRole } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 
@@ -94,9 +95,9 @@ export default async function StaffClientsPage({
           {q ? `No clients match "${q}".` : "No clients have registered yet."}
         </section>
       ) : (
-        <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white">
-          <table className="min-w-full divide-y divide-slate-200 text-sm">
-            <thead className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+        <div className={panelClass("overflow-x-auto")}>
+          <table className="min-w-full divide-y divide-line text-sm">
+            <thead className="bg-highlight/50 text-left text-xs font-semibold uppercase tracking-wide text-muted">
               <tr>
                 <th scope="col" className="px-4 py-3">Name</th>
                 <th scope="col" className="px-4 py-3">Contact no.</th>

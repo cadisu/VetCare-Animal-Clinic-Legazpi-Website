@@ -4,6 +4,7 @@ import { DashboardHeading } from "@/components/portal/PlaceholderCard";
 import { buttonClass } from "@/components/ui/button-styles";
 import { FormField, SelectField } from "@/components/ui/FormField";
 import { SubmitButton } from "@/components/ui/SubmitButton";
+import { panelPaddingClass } from "@/components/ui/panel-styles";
 import { requireRole } from "@/lib/auth/session";
 import { todayIso } from "@/lib/dates";
 import { createClient } from "@/lib/supabase/server";
@@ -40,7 +41,7 @@ export default async function SeniorVetSchedulePage() {
         subtitle="Publish slots, block dates, and review clinic hours (edit hours via database for now)."
       />
 
-      <section className="mt-8 rounded-2xl border border-slate-200 bg-white p-6">
+      <section className={panelPaddingClass("mt-8")}>
         <h2 className="text-base font-semibold">Publish / generate slots</h2>
         <p className="mt-2 text-sm text-slate-600">
           Creates 60-minute slots from weekly rules (max 60-day window per call).
@@ -52,7 +53,7 @@ export default async function SeniorVetSchedulePage() {
         </form>
       </section>
 
-      <section className="mt-8 rounded-2xl border border-slate-200 bg-white p-6">
+      <section className={panelPaddingClass("mt-8")}>
         <h2 className="text-base font-semibold">Block a date</h2>
         <form action={blockDateFormAction} className="mt-4 space-y-4">
           <FormField label="Date" name="blockDate" type="date" required />
@@ -90,7 +91,7 @@ export default async function SeniorVetSchedulePage() {
         </ul>
       </section>
 
-      <section className="mt-8 rounded-2xl border border-slate-200 bg-white p-6">
+      <section className={panelPaddingClass("mt-8")}>
         <h2 className="text-base font-semibold">Clinic weekly hours (seed)</h2>
         <ul className="mt-4 space-y-1 text-sm text-slate-700">
           {(clinicHours ?? []).map((h) => (

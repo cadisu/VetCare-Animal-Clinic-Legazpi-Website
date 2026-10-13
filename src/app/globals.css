@@ -9,6 +9,13 @@
   --color-accent: #d82500;
   --color-accent-dark: #b01e00;
 
+  /* Dashboard supporting palette */
+  --color-canvas: #f5f3fa;
+  --color-ink: #252238;
+  --color-muted: #706b7d;
+  --color-line: #e6e1f0;
+  --color-highlight: #efebf8;
+
   --font-sans:
     ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial,
     "Noto Sans", sans-serif;

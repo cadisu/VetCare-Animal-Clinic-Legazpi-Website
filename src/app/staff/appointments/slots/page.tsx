@@ -3,6 +3,7 @@ import { setSlotBlockedFormAction, setSlotCapacityFormAction } from "@/app/actio
 import { DashboardHeading } from "@/components/portal/PlaceholderCard";
 import { buttonClass } from "@/components/ui/button-styles";
 import { FormField } from "@/components/ui/FormField";
+import { panelClass } from "@/components/ui/panel-styles";
 import { formatTime12 } from "@/lib/appointments/constants";
 import { requireRole } from "@/lib/auth/session";
 import { todayIso } from "@/lib/dates";
@@ -52,9 +53,9 @@ export default async function StaffSlotsPage({
         </button>
       </form>
 
-      <div className="mt-8 overflow-x-auto rounded-2xl border border-slate-200 bg-white">
+      <div className={panelClass("mt-8 overflow-x-auto")}>
         <table className="min-w-full text-left text-sm">
-          <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase text-slate-500">
+          <thead className="border-b border-line bg-highlight/50 text-xs uppercase text-muted">
             <tr>
               <th className="px-4 py-3">Time</th>
               <th className="px-4 py-3">Lane</th>

@@ -5,6 +5,7 @@ import { ClientUpcomingPreview } from "@/components/appointments/ClientUpcomingP
 import { PetAvatar } from "@/components/pets/PetAvatar";
 import { DashboardHeading, PlaceholderCard } from "@/components/portal/PlaceholderCard";
 import { buttonClass } from "@/components/ui/button-styles";
+import { panelPaddingClass } from "@/components/ui/panel-styles";
 import { listAppointmentsForClient, splitClientAppointments } from "@/lib/appointments/server";
 import { requireRole } from "@/lib/auth/session";
 import { speciesLabel, PET_COLUMNS, type Pet } from "@/lib/pets/constants";
@@ -37,9 +38,9 @@ export default async function ClientDashboardPage() {
         subtitle="Here's an overview of your pets and appointments."
       />
       <div className="grid gap-6 md:grid-cols-2">
-        <section className="rounded-2xl border border-slate-200 bg-white p-6 md:col-span-2 lg:col-span-1">
+        <section className={panelPaddingClass("md:col-span-2 lg:col-span-1")}>
           <div className="flex items-start justify-between gap-3">
-            <h2 className="text-base font-semibold text-slate-900">Upcoming Appointments</h2>
+            <h2 className="text-base font-semibold text-ink">Upcoming Appointments</h2>
             <Link href="/client/appointments" className="text-sm font-semibold text-brand hover:underline">
               View all
             </Link>
@@ -52,16 +53,16 @@ export default async function ClientDashboardPage() {
             Book an appointment
           </Link>
         </section>
-        <section className="rounded-2xl border border-slate-200 bg-white p-6">
+        <section className={panelPaddingClass()}>
           <div className="flex items-start justify-between gap-3">
-            <h2 className="text-base font-semibold text-slate-900">My Pets</h2>
+            <h2 className="text-base font-semibold text-ink">My Pets</h2>
             <Link href="/client/pets" className="text-sm font-semibold text-brand hover:underline">
               View all
             </Link>
           </div>
           {pets.length === 0 ? (
             <div className="mt-3">
-              <p className="text-sm text-slate-600">You haven&apos;t registered any pets yet.</p>
+              <p className="text-sm text-muted">You haven&apos;t registered any pets yet.</p>
               <Link href="/client/pets/new" className={buttonClass("primary", "md", "mt-4")}>
                 Register a pet
               </Link>
@@ -72,7 +73,7 @@ export default async function ClientDashboardPage() {
                 <li key={pet.id}>
                   <Link
                     href={`/client/pets/${pet.id}`}
-                    className="flex items-center gap-3 rounded-lg p-1 hover:bg-brand-soft/60"
+                    className="flex items-center gap-3 rounded-lg p-1 hover:bg-highlight/80"
                   >
                     <PetAvatar
                       url={pet.image_path ? imageUrls[pet.image_path] : null}
@@ -80,8 +81,8 @@ export default async function ClientDashboardPage() {
                       className="size-12"
                     />
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-semibold text-slate-900">{pet.name}</p>
-                      <p className="truncate text-xs text-slate-500">
+                      <p className="truncate text-sm font-semibold text-ink">{pet.name}</p>
+                      <p className="truncate text-xs text-muted">
                         {speciesLabel(pet)} · {pet.breed}
                       </p>
                     </div>
@@ -89,7 +90,7 @@ export default async function ClientDashboardPage() {
                 </li>
               ))}
               {pets.length > 4 && (
-                <li className="text-sm text-slate-500">and {pets.length - 4} more…</li>
+                <li className="text-sm text-muted">and {pets.length - 4} more…</li>
               )}
             </ul>
           )}

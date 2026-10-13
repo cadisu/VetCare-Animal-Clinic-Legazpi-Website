@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { AppointmentCard } from "@/components/appointments/AppointmentCard";
 import { DashboardHeading, PlaceholderCard } from "@/components/portal/PlaceholderCard";
+import { panelPaddingClass } from "@/components/ui/panel-styles";
 import { CLIENT_UPCOMING_PREVIEW_LIMIT } from "@/lib/appointments/constants";
 import { listAppointmentsForDay, listFutureClinicAppointments } from "@/lib/appointments/server";
 import { requireRole } from "@/lib/auth/session";
@@ -45,11 +46,11 @@ export default async function SeniorVetDashboardPage() {
       )}
 
       <div className="space-y-6">
-        <section className="rounded-2xl border border-slate-200 bg-white p-6">
+        <section className={panelPaddingClass()}>
           <div className="flex items-start justify-between gap-3">
             <div>
-              <h2 className="text-base font-semibold">Today&apos;s Appointments</h2>
-              <p className="mt-1 text-sm text-slate-600">
+              <h2 className="text-base font-semibold text-ink">Today&apos;s Appointments</h2>
+              <p className="mt-1 text-sm text-muted">
                 {todayAppointments.length === 0
                   ? "No appointments for today."
                   : `${todayAppointments.length} scheduled for today.`}
@@ -69,17 +70,17 @@ export default async function SeniorVetDashboardPage() {
             </ul>
           )}
           {todayAppointments.length > todayPreview.length && (
-            <p className="mt-3 text-sm text-slate-600">
+            <p className="mt-3 text-sm text-muted">
               Showing {todayPreview.length} of {todayAppointments.length}. The rest are on the full Today view.
             </p>
           )}
         </section>
 
-        <section className="rounded-2xl border border-slate-200 bg-white p-6">
+        <section className={panelPaddingClass()}>
           <div className="flex items-start justify-between gap-3">
             <div>
-              <h2 className="text-base font-semibold">Future Appointments</h2>
-              <p className="mt-1 text-sm text-slate-600">Upcoming visits after today, nearest first.</p>
+              <h2 className="text-base font-semibold text-ink">Future Appointments</h2>
+              <p className="mt-1 text-sm text-muted">Upcoming visits after today, nearest first.</p>
             </div>
             <Link
               href="/senior-vet/appointments/future"
@@ -89,7 +90,7 @@ export default async function SeniorVetDashboardPage() {
             </Link>
           </div>
           {futurePreview.length === 0 ? (
-            <p className="mt-4 text-sm text-slate-600">No upcoming appointments after today.</p>
+            <p className="mt-4 text-sm text-muted">No upcoming appointments after today.</p>
           ) : (
             <ul className="mt-4 space-y-2">
               {futurePreview.map((appointment) => (
@@ -100,7 +101,7 @@ export default async function SeniorVetDashboardPage() {
             </ul>
           )}
           {futureAppointments.length > futurePreview.length && (
-            <p className="mt-3 text-sm text-slate-600">
+            <p className="mt-3 text-sm text-muted">
               Showing {futurePreview.length} of {futureAppointments.length}. The rest are on the full Future view.
             </p>
           )}

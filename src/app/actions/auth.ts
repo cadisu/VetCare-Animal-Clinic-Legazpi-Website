@@ -219,7 +219,7 @@ export async function changePasswordAction(
   _prev: FormState,
   formData: FormData,
 ): Promise<FormState> {
-  const profile = await requireRole(["SENIOR_VET"]);
+  const profile = await requireRole(["STAFF", "SENIOR_VET"]);
   const parsed = changePasswordSchema.safeParse({
     currentPassword: text(formData, "currentPassword"),
     password: text(formData, "password"),

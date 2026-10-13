@@ -22,7 +22,7 @@ export function PortalNav({ items }: { items: PortalNavItem[] }) {
             className={`whitespace-nowrap border-b-2 px-3 py-3 text-sm font-medium ${
               active
                 ? "border-brand text-brand"
-                : "border-transparent text-slate-600 hover:text-brand"
+                : "border-transparent text-muted hover:text-brand"
             }`}
           >
             {item.label}

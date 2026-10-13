@@ -8,7 +8,7 @@ export function PetCard({ pet, href, imageUrl }: { pet: Pet; href: string; image
   return (
     <Link
       href={href}
-      className="flex gap-4 rounded-2xl border border-slate-200 bg-white p-4 transition-colors hover:border-brand/40 hover:bg-brand-soft/40"
+      className="flex gap-4 rounded-2xl border border-line bg-white p-4 shadow-sm shadow-black/[0.03] transition-colors hover:border-brand/40 hover:bg-highlight/80"
     >
       <PetAvatar url={imageUrl} name={pet.name} />
       <div className="min-w-0 flex-1">

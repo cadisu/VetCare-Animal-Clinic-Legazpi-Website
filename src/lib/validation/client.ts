@@ -51,3 +51,9 @@ export const clientProfileFields = {
 
 export const clientProfileSchema = z.object(clientProfileFields);
 export type ClientProfileInput = z.infer<typeof clientProfileSchema>;
+
+/** Staff may edit name, contact number, and profile picture on their own account. */
+export const staffProfileSchema = personNameSchema.extend({
+  contactNumber: phoneSchema,
+});
+export type StaffProfileInput = z.infer<typeof staffProfileSchema>;

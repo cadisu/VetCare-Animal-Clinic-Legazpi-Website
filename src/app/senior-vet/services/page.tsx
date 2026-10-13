@@ -4,6 +4,7 @@ import { DashboardHeading } from "@/components/portal/PlaceholderCard";
 import { Alert } from "@/components/ui/Alert";
 import { FormField, SelectField, TextAreaField } from "@/components/ui/FormField";
 import { SubmitButton } from "@/components/ui/SubmitButton";
+import { panelPaddingClass } from "@/components/ui/panel-styles";
 import { requireRole } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 
@@ -27,7 +28,7 @@ export default async function SeniorVetServicesPage({
     <>
       <DashboardHeading title="Clinic services" subtitle="Manage bookable services for appointments." />
       <div className="mt-8 grid gap-8 lg:grid-cols-2">
-        <section className="rounded-2xl border border-slate-200 bg-white p-6">
+        <section className={panelPaddingClass()}>
           <h2 className="text-base font-semibold">All services</h2>
           <ul className="mt-4 space-y-2 text-sm">
             {(services ?? []).map((s) => (
@@ -46,7 +47,7 @@ export default async function SeniorVetServicesPage({
           </ul>
         </section>
 
-        <section className="rounded-2xl border border-slate-200 bg-white p-6">
+        <section className={panelPaddingClass()}>
           <h2 className="text-base font-semibold">{editing ? "Edit service" : "Add service"}</h2>
           <form action={upsertServiceFormAction} className="mt-4 space-y-4">
             {editing && <input type="hidden" name="serviceId" value={editing.id} />}
