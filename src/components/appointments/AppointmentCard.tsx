@@ -14,12 +14,14 @@ export function AppointmentCard({
   showClient,
   staffDay,
   showMarkComplete,
+  returnTo,
 }: {
   appointment: AppointmentListRow & { client?: { full_name: string } };
   href: string;
   showClient?: boolean;
   staffDay?: string;
   showMarkComplete?: boolean;
+  returnTo?: string;
 }) {
   const { slot } = appointment;
   return (
@@ -52,7 +54,9 @@ export function AppointmentCard({
           </p>
         )}
       </Link>
-      {showMarkComplete && <MarkCompleteButton appointment={appointment} day={staffDay} />}
+      {showMarkComplete && (
+        <MarkCompleteButton appointment={appointment} day={staffDay} returnTo={returnTo} />
+      )}
     </div>
   );
 }

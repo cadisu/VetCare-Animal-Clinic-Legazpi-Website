@@ -155,14 +155,21 @@ export async function markAppointmentCompletedAction(formData: FormData): Promis
   revalidatePath("/staff");
   revalidatePath("/staff/appointments");
   revalidatePath("/senior-vet");
+  revalidatePath("/senior-vet/appointments");
   revalidatePath("/client");
   revalidatePath("/client/appointments");
   revalidatePath(`/client/appointments/${appointmentId}`);
 
+  const requestedReturn = String(formData.get("returnTo") ?? "");
+  const destination =
+    requestedReturn === "/senior-vet/appointments" || requestedReturn === "/senior-vet/appointments/future"
+      ? requestedReturn
+      : "/staff/appointments";
+
   const params = new URLSearchParams();
-  if (returnDay) params.set("day", returnDay);
+  if (returnDay && destination !== "/senior-vet/appointments/future") params.set("day", returnDay);
   if (error) params.set("completeError", error.message);
   else params.set("completed", "1");
   const qs = params.toString() ? `?${params.toString()}` : "";
-  redirect(`/staff/appointments${qs}`);
+  redirect(`${destination}${qs}`);
 }

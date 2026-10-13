@@ -50,3 +50,18 @@ export const resetPasswordSchema = z
     path: ["confirmPassword"],
     message: "Passwords do not match.",
   });
+
+export const changePasswordSchema = z
+  .object({
+    currentPassword: z.string().min(1, "Enter your current password.").max(72),
+    password: passwordSchema,
+    confirmPassword: z.string(),
+  })
+  .refine((d) => d.password === d.confirmPassword, {
+    path: ["confirmPassword"],
+    message: "Passwords do not match.",
+  })
+  .refine((d) => d.password !== d.currentPassword, {
+    path: ["password"],
+    message: "Choose a password different from your current one.",
+  });

@@ -1,12 +1,15 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { todayIso } from "@/lib/dates";
+import { isIsoDate } from "@/lib/dates";
 import {
+  APPOINTMENT_STATUSES,
   BOOKING_WINDOW_DAYS,
   CLIENT_UPCOMING_PREVIEW_LIMIT,
   compareAppointmentsBySlotTime,
   isClientUpcomingAppointment,
   type AppointmentListRow,
+  type AppointmentStatus,
   type AvailabilityRow,
   type ServiceRow,
   type VeterinarianRow,
@@ -235,4 +238,186 @@ export async function listAppointmentsForPet(
     .order("created_at", { ascending: false })
     .limit(20);
   return (data ?? []) as unknown as AppointmentListRow[];
+}
+
+const CLIENT_EMBED = "client:profiles!appointments_client_id_fkey ( full_name )";
+const APPOINTMENT_WITH_CLIENT_SELECT = `${APPOINTMENT_LIST_SELECT}, ${CLIENT_EMBED}`;
+
+export const APPOINTMENT_LOG_PAGE_SIZE = 20;
+const APPOINTMENT_LOG_SCAN_CAP = 2000;
+const SLOT_SCAN_CAP = 5000;
+
+async function collectSlotIds(
+  fetchPage: (
+    from: number,
+    to: number,
+  ) => PromiseLike<{ data: { id: string }[] | null; error: { message: string } | null }>,
+): Promise<{ ids: string[]; truncated: boolean }> {
+  const ids: string[] = [];
+  let from = 0;
+  let truncated = false;
+  for (;;) {
+    const to = from + SLOT_ID_PAGE_SIZE - 1;
+    const { data, error } = await fetchPage(from, to);
+    if (error) throw error;
+    const page = (data ?? []).map((slot) => slot.id);
+    ids.push(...page);
+    if (ids.length >= SLOT_SCAN_CAP) {
+      truncated = true;
+      ids.length = SLOT_SCAN_CAP;
+      break;
+    }
+    if (page.length < SLOT_ID_PAGE_SIZE) break;
+    from += SLOT_ID_PAGE_SIZE;
+  }
+  return { ids, truncated };
+}
+
+/** Clinic appointments after today that still count as upcoming. */
+export async function listFutureClinicAppointments(
+  supabase: SupabaseClient,
+  options?: { limit?: number },
+): Promise<AppointmentListRowWithClient[]> {
+  const today = todayIso();
+  const { ids } = await collectSlotIds((from, to) =>
+    supabase
+      .from("appointment_slots")
+      .select("id")
+      .gt("slot_date", today)
+      .order("slot_date", { ascending: true })
+      .order("start_time", { ascending: true })
+      .range(from, to),
+  );
+  if (ids.length === 0) return [];
+
+  const rows = await listAppointmentsForSlotIds(supabase, ids);
+  const upcoming = rows
+    .filter((appointment) =>
+      isClientUpcomingAppointment(appointment.slot.slot_date, appointment.slot.start_time, appointment.status),
+    )
+    .sort(compareAppointmentsBySlotTime);
+  return options?.limit ? upcoming.slice(0, options.limit) : upcoming;
+}
+
+export type AppointmentLogFilters = {
+  page?: number;
+  q?: string;
+  status?: string;
+  from?: string;
+  to?: string;
+};
+
+export type AppointmentLogResult = {
+  rows: AppointmentListRowWithClient[];
+  total: number;
+  page: number;
+  pageSize: number;
+  truncated: boolean;
+};
+
+function parseLogStatus(status?: string): AppointmentStatus | undefined {
+  if (!status) return undefined;
+  return (APPOINTMENT_STATUSES as readonly string[]).includes(status)
+    ? (status as AppointmentStatus)
+    : undefined;
+}
+
+function matchesLogQuery(row: AppointmentListRowWithClient, needle: string): boolean {
+  return (
+    row.pet.name.toLowerCase().includes(needle) ||
+    (row.client?.full_name ?? "").toLowerCase().includes(needle) ||
+    row.service.name.toLowerCase().includes(needle) ||
+    (row.slot.veterinarian?.display_name ?? "").toLowerCase().includes(needle)
+  );
+}
+
+/** Historical appointment log. Reads the existing appointments table; does not create a history table. */
+export async function listAppointmentLog(
+  supabase: SupabaseClient,
+  filters: AppointmentLogFilters,
+): Promise<AppointmentLogResult> {
+  const page = filters.page && filters.page > 0 ? Math.floor(filters.page) : 1;
+  const status = parseLogStatus(filters.status);
+  const q = filters.q?.trim().slice(0, 80) ?? "";
+  let fromDate = filters.from && isIsoDate(filters.from) ? filters.from : undefined;
+  let toDate = filters.to && isIsoDate(filters.to) ? filters.to : undefined;
+  if (fromDate && toDate && fromDate > toDate) {
+    const swap = fromDate;
+    fromDate = toDate;
+    toDate = swap;
+  }
+
+  const pageSize = APPOINTMENT_LOG_PAGE_SIZE;
+  const start = (page - 1) * pageSize;
+
+  if (!q && !fromDate && !toDate) {
+    let query = supabase
+      .from("appointments")
+      .select(APPOINTMENT_WITH_CLIENT_SELECT, { count: "exact" })
+      .order("created_at", { ascending: false });
+    if (status) query = query.eq("status", status);
+    const { data, error, count } = await query.range(start, start + pageSize - 1);
+    if (error) throw error;
+    return {
+      rows: (data ?? []) as unknown as AppointmentListRowWithClient[],
+      total: count ?? 0,
+      page,
+      pageSize,
+      truncated: false,
+    };
+  }
+
+  let rows: AppointmentListRowWithClient[] = [];
+  let truncated = false;
+
+  if (fromDate || toDate) {
+    const scanned = await collectSlotIds((from, to) => {
+      let query = supabase
+        .from("appointment_slots")
+        .select("id")
+        .order("slot_date", { ascending: false })
+        .order("start_time", { ascending: false });
+      if (fromDate) query = query.gte("slot_date", fromDate);
+      if (toDate) query = query.lte("slot_date", toDate);
+      return query.range(from, to);
+    });
+    truncated = scanned.truncated;
+    rows = scanned.ids.length ? await listAppointmentsForSlotIds(supabase, scanned.ids) : [];
+    if (status) rows = rows.filter((row) => row.status === status);
+  } else {
+    let offset = 0;
+    const chunk = 200;
+    while (rows.length < APPOINTMENT_LOG_SCAN_CAP) {
+      let query = supabase
+        .from("appointments")
+        .select(APPOINTMENT_WITH_CLIENT_SELECT)
+        .order("created_at", { ascending: false });
+      if (status) query = query.eq("status", status);
+      const { data, error } = await query.range(offset, offset + chunk - 1);
+      if (error) throw error;
+      const pageRows = (data ?? []) as unknown as AppointmentListRowWithClient[];
+      rows.push(...pageRows);
+      if (pageRows.length < chunk) break;
+      offset += chunk;
+      if (rows.length >= APPOINTMENT_LOG_SCAN_CAP) {
+        truncated = true;
+        rows = rows.slice(0, APPOINTMENT_LOG_SCAN_CAP);
+        break;
+      }
+    }
+  }
+
+  if (q) {
+    const needle = q.toLowerCase();
+    rows = rows.filter((row) => matchesLogQuery(row, needle));
+  }
+  rows.sort((a, b) => compareAppointmentsBySlotTime(b, a));
+
+  return {
+    rows: rows.slice(start, start + pageSize),
+    total: rows.length,
+    page,
+    pageSize,
+    truncated,
+  };
 }

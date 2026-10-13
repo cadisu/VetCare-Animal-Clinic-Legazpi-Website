@@ -98,3 +98,33 @@ export const UserIcon = (props: IconProps) => (
     <path d="M4 21c0-4 3.6-7 8-7s8 3 8 7" />
   </svg>
 );
+
+export const DashboardIcon = (props: IconProps) => (
+  <svg {...base(props)}>
+    <rect x="3" y="3" width="7" height="9" rx="1.5" />
+    <rect x="14" y="3" width="7" height="5" rx="1.5" />
+    <rect x="14" y="12" width="7" height="9" rx="1.5" />
+    <rect x="3" y="16" width="7" height="5" rx="1.5" />
+  </svg>
+);
+
+export const UsersIcon = (props: IconProps) => (
+  <svg {...base(props)}>
+    <circle cx="9" cy="8" r="3" />
+    <path d="M3.5 19c0-3 2.4-5 5.5-5s5.5 2 5.5 5" />
+    <circle cx="17" cy="9" r="2.2" />
+    <path d="M16 14.2c2.4.3 4.5 2 4.5 4.8" />
+  </svg>
+);
+
+export const ChevronLeftIcon = (props: IconProps) => (
+  <svg {...base(props)}>
+    <path d="M14.5 6 8.5 12l6 6" />
+  </svg>
+);
+
+export const ChevronRightIcon = (props: IconProps) => (
+  <svg {...base(props)}>
+    <path d="m9.5 6 6 6-6 6" />
+  </svg>
+);

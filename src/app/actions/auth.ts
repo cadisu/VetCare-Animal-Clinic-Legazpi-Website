@@ -6,7 +6,9 @@ import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { getSiteUrl } from "@/lib/site-url";
 import { isUserRole, resolvePostLoginPath } from "@/lib/auth/roles";
+import { requireRole } from "@/lib/auth/session";
 import {
+  changePasswordSchema,
   forgotPasswordSchema,
   loginSchema,
   registerSchema,
@@ -211,6 +213,49 @@ export async function resetPasswordAction(
 
   await supabase.auth.signOut();
   redirect("/login?message=password-updated");
+}
+
+export async function changePasswordAction(
+  _prev: FormState,
+  formData: FormData,
+): Promise<FormState> {
+  const profile = await requireRole(["SENIOR_VET"]);
+  const parsed = changePasswordSchema.safeParse({
+    currentPassword: text(formData, "currentPassword"),
+    password: text(formData, "password"),
+    confirmPassword: text(formData, "confirmPassword"),
+  });
+  if (!parsed.success) {
+    return { fieldErrors: z.flattenError(parsed.error).fieldErrors };
+  }
+  if (!isSupabaseConfigured()) return { error: NOT_CONFIGURED };
+
+  const supabase = await createClient();
+  const { error: signInError } = await supabase.auth.signInWithPassword({
+    email: profile.email,
+    password: parsed.data.currentPassword,
+  });
+  if (signInError) {
+    return { fieldErrors: { currentPassword: ["Current password is incorrect."] } };
+  }
+
+  const { error } = await supabase.auth.updateUser({ password: parsed.data.password });
+  if (error) {
+    if (error.code === "weak_password" || error.code === "same_password") {
+      return {
+        fieldErrors: {
+          password: [
+            error.code === "same_password"
+              ? "Choose a password different from your current one."
+              : "Please choose a stronger password.",
+          ],
+        },
+      };
+    }
+    return { error: GENERIC_ERROR };
+  }
+
+  return { success: "Your password has been updated." };
 }
 
 /* ------------------------------------------------------------------ */

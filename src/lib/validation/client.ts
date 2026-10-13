@@ -29,6 +29,12 @@ const birthdateSchema = z
   .refine((v) => v >= "1900-01-01", "Enter a valid birthdate.")
   .refine((v) => v <= todayIso(), "Birthdate cannot be in the future.");
 
+export const personNameSchema = z.object({
+  lastName: nameSchema("last name"),
+  firstName: nameSchema("first name"),
+  middleName: middleNameSchema,
+});
+
 /** Personal fields shared by registration and the client's "My Profile" page. */
 export const clientProfileFields = {
   lastName: nameSchema("last name"),

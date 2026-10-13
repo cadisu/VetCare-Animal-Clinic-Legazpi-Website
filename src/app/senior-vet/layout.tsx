@@ -1,21 +1,24 @@
-import { PortalShell } from "@/components/portal/PortalShell";
+import { SeniorVetShell } from "@/components/senior-vet/SeniorVetShell";
 import { requireRole } from "@/lib/auth/session";
+import { getOwnAvatarUrl } from "@/lib/profile/avatar";
+import { createClient } from "@/lib/supabase/server";
 
 export default async function SeniorVetLayout({ children }: { children: React.ReactNode }) {
   const profile = await requireRole(["SENIOR_VET"]);
+  const supabase = await createClient();
+  const avatarUrl = await getOwnAvatarUrl(supabase, profile.id);
+
   return (
-    <PortalShell
-      profile={profile}
-      nav={[
-        { href: "/senior-vet", label: "Senior Vet Dashboard" },
-        { href: "/senior-vet/services", label: "Services" },
-        { href: "/senior-vet/schedule", label: "Schedule" },
-        { href: "/staff", label: "Staff Dashboard", exact: true },
-        { href: "/staff/appointments", label: "Appointments" },
-        { href: "/staff/clients", label: "Clients" },
-      ]}
+    <SeniorVetShell
+      profile={{
+        fullName: profile.full_name,
+        email: profile.email,
+        firstName: profile.first_name,
+        lastName: profile.last_name,
+        avatarUrl,
+      }}
     >
       {children}
-    </PortalShell>
+    </SeniorVetShell>
   );
 }
