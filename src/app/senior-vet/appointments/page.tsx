@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { AppointmentCard } from "@/components/appointments/AppointmentCard";
-import { Alert } from "@/components/ui/Alert";
+import { AppointmentStatusNotice } from "@/components/appointments/AppointmentStatusNotice";
 import { buttonClass } from "@/components/ui/button-styles";
 import { FormField } from "@/components/ui/FormField";
 import { listAppointmentsForDay } from "@/lib/appointments/server";
@@ -13,7 +13,14 @@ export const metadata: Metadata = { title: "Today's Appointments" };
 export default async function SeniorVetTodayAppointmentsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ day?: string; q?: string; source?: string; completeError?: string; completed?: string }>;
+  searchParams: Promise<{
+    day?: string;
+    q?: string;
+    source?: string;
+    notice?: string;
+    statusError?: string;
+    completed?: string;
+  }>;
 }) {
   await requireRole(["SENIOR_VET"]);
   const params = await searchParams;
@@ -29,16 +36,7 @@ export default async function SeniorVetTodayAppointmentsPage({
       <h2 className="text-lg font-semibold text-slate-900">Today&apos;s Appointments</h2>
       <p className="mt-1 text-sm text-slate-600">Day view for {day}.</p>
 
-      {params.completed === "1" && (
-        <div className="mt-4">
-          <Alert variant="success">Appointment marked as completed.</Alert>
-        </div>
-      )}
-      {params.completeError && (
-        <div className="mt-4">
-          <Alert variant="error">{params.completeError}</Alert>
-        </div>
-      )}
+      <AppointmentStatusNotice notice={params.notice} statusError={params.statusError} completed={params.completed} />
 
       <form method="get" className="mt-6 flex flex-wrap items-end gap-3">
         <FormField label="Date" name="day" type="date" defaultValue={day} className="w-auto" />
@@ -73,7 +71,8 @@ export default async function SeniorVetTodayAppointmentsPage({
                 appointment={appointment}
                 href="/senior-vet/appointments"
                 showClient
-                showMarkComplete
+                showStatusActions
+                actorRole="SENIOR_VET"
                 staffDay={day}
                 returnTo="/senior-vet/appointments"
               />

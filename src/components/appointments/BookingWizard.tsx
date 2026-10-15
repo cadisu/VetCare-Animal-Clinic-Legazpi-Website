@@ -9,6 +9,7 @@ import {
   fetchBookingAvailabilityAction,
 } from "@/app/actions/appointments";
 import type { FormState } from "@/app/actions/auth";
+import { AppointmentBookingSummary } from "@/components/appointments/AppointmentBookingSummary";
 import {
   AppointmentDateCalendar,
   bookingMaxDateIso,
@@ -18,8 +19,8 @@ import { SubmitButton } from "@/components/ui/SubmitButton";
 import { buttonClass } from "@/components/ui/button-styles";
 import { BOOKING_WINDOW_DAYS } from "@/lib/appointments/constants";
 import type { AvailabilityRow, ServiceRow, VeterinarianRow } from "@/lib/appointments/constants";
-import { formatTime12, slotStateLabel } from "@/lib/appointments/constants";
-import { todayIso } from "@/lib/dates";
+import { formatTime12, slotStateLabel, SOURCE_LABELS } from "@/lib/appointments/constants";
+import { formatDate, todayIso } from "@/lib/dates";
 import type { Pet } from "@/lib/pets/constants";
 
 const initial: FormState = {};
@@ -122,6 +123,35 @@ export function BookingWizard({
     () => availability.filter((a) => a.slot_date === date),
     [availability, date],
   );
+
+  const selectedSlot = useMemo(
+    () => availability.find((a) => a.slot_id === slotId && a.slot_state === "AVAILABLE"),
+    [availability, slotId],
+  );
+
+  const selectedPet = pets.find((p) => p.id === petId);
+  const selectedVet = veterinarians.find((v) => v.id === vetId);
+
+  const bookingReady = Boolean(
+    service &&
+      petId &&
+      selectedSlot &&
+      (!needsVet || vetId) &&
+      selectedPet,
+  );
+
+  const reviewRows = bookingReady
+    ? [
+        { label: "Service", value: service!.name },
+        { label: "Pet", value: selectedPet!.name },
+        ...(needsVet && selectedVet
+          ? [{ label: "Veterinarian", value: selectedVet.display_name }]
+          : []),
+        { label: "Date", value: formatDate(date) },
+        { label: "Time", value: formatTime12(selectedSlot!.start_time) },
+        { label: "Source", value: SOURCE_LABELS.APPOINTMENT },
+      ]
+    : [];
 
   function selectService(id: string) {
     setServiceId(id);
@@ -278,8 +308,23 @@ export function BookingWizard({
       )}
 
       <section className="rounded-2xl border border-slate-200 bg-white p-6">
-        <h2 className="text-base font-semibold">{needsVet ? "6" : "5"}. Confirm</h2>
-        <SubmitButton className="mt-4">Confirm booking</SubmitButton>
+        <h2 className="text-base font-semibold">{needsVet ? "6" : "5"}. Review and confirm</h2>
+        {!bookingReady && (
+          <p className="mt-3 text-sm text-slate-600">
+            Select a service, pet, date, and available time to review your booking.
+          </p>
+        )}
+        {bookingReady && (
+          <div className="mt-4">
+            <AppointmentBookingSummary
+              rows={reviewRows}
+              vetAcceptancePending={Boolean(selectedSlot?.requires_vet_acceptance)}
+            />
+          </div>
+        )}
+        <SubmitButton className="mt-4" disabled={!bookingReady}>
+          Confirm booking
+        </SubmitButton>
       </section>
     </form>
   );

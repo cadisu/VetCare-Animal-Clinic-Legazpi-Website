@@ -227,6 +227,18 @@ export async function getAppointmentById(
   return (data as unknown as AppointmentListRow) ?? null;
 }
 
+export async function getAppointmentByIdWithClient(
+  supabase: SupabaseClient,
+  appointmentId: string,
+): Promise<(AppointmentListRow & { client?: { full_name: string } }) | null> {
+  const { data } = await supabase
+    .from("appointments")
+    .select(`${APPOINTMENT_LIST_SELECT}, client:profiles!appointments_client_id_fkey ( full_name )`)
+    .eq("id", appointmentId)
+    .maybeSingle();
+  return (data as unknown as AppointmentListRow & { client?: { full_name: string } }) ?? null;
+}
+
 export async function listAppointmentsForPet(
   supabase: SupabaseClient,
   petId: string,

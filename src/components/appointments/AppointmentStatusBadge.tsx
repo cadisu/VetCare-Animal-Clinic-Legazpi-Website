@@ -1,5 +1,4 @@
-import type { AppointmentStatus } from "@/lib/appointments/constants";
-import { STATUS_LABELS } from "@/lib/appointments/constants";
+import { isAppointmentStatus, statusLabel, type AppointmentStatus } from "@/lib/appointments/constants";
 
 const STYLES: Record<AppointmentStatus, string> = {
   PENDING: "bg-amber-50 text-amber-800 ring-amber-200",
@@ -11,12 +10,13 @@ const STYLES: Record<AppointmentStatus, string> = {
   NO_SHOW: "bg-orange-50 text-orange-800 ring-orange-200",
 };
 
-export function AppointmentStatusBadge({ status }: { status: AppointmentStatus }) {
+const UNKNOWN_STYLE = "bg-slate-100 text-slate-700 ring-slate-200";
+
+export function AppointmentStatusBadge({ status }: { status: string }) {
+  const style = isAppointmentStatus(status) ? STYLES[status] : UNKNOWN_STYLE;
   return (
-    <span
-      className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset ${STYLES[status]}`}
-    >
-      {STATUS_LABELS[status]}
+    <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset ${style}`}>
+      {statusLabel(status)}
     </span>
   );
 }

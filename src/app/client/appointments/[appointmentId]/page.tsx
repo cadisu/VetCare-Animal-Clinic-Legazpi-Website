@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { AppointmentStatusActions } from "@/components/appointments/AppointmentStatusActions";
 import { AppointmentStatusBadge } from "@/components/appointments/AppointmentStatusBadge";
+import { AppointmentStatusNotice } from "@/components/appointments/AppointmentStatusNotice";
 import { DashboardHeading } from "@/components/portal/PlaceholderCard";
 import { buttonClass } from "@/components/ui/button-styles";
 import { formatTime12, SOURCE_LABELS } from "@/lib/appointments/constants";
@@ -14,11 +16,14 @@ export const metadata: Metadata = { title: "Appointment Details" };
 
 export default async function ClientAppointmentDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ appointmentId: string }>;
+  searchParams: Promise<{ notice?: string; statusError?: string }>;
 }) {
   const profile = await requireRole(["CLIENT"]);
   const { appointmentId } = await params;
+  const query = await searchParams;
   const supabase = await createClient();
   const appointment = await getAppointmentById(supabase, appointmentId);
   if (!appointment) notFound();
@@ -28,7 +33,8 @@ export default async function ClientAppointmentDetailPage({
 
   return (
     <>
-      <DashboardHeading title="Appointment confirmed" subtitle="Your booking has been saved." />
+      <DashboardHeading title="Appointment details" subtitle="Status and visit information for this booking." />
+      <AppointmentStatusNotice notice={query.notice} statusError={query.statusError} />
       <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-6">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <h2 className="text-lg font-semibold">{appointment.service.name}</h2>
@@ -58,12 +64,12 @@ export default async function ClientAppointmentDetailPage({
             </div>
           )}
         </dl>
-        {slot.requires_vet_acceptance && appointment.status === "PENDING" && (
+        {appointment.status === "PENDING" && (
           <p className="mt-6 rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-900">
-            Awaiting Dr. Carmela&apos;s confirmation for this date and time. You will be notified when
-            the clinic confirms (confirmation workflow arrives in Phase 4).
+            This appointment is pending. You can cancel it if you change your mind.
           </p>
         )}
+        <AppointmentStatusActions role="CLIENT" appointmentId={appointment.id} status={appointment.status} />
         <Link href="/client/appointments" className={buttonClass("outline", "md", "mt-8 inline-flex")}>
           Back to appointments
         </Link>

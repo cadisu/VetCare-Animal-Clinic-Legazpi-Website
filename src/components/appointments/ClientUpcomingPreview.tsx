@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AppointmentStatusBadge } from "@/components/appointments/AppointmentStatusBadge";
 import { formatTime12, type AppointmentListRow } from "@/lib/appointments/constants";
 import { formatDate } from "@/lib/dates";
 
@@ -21,8 +22,11 @@ export function ClientUpcomingPreview({
             href={detailHref(a.id)}
             className="block rounded-lg border border-slate-100 px-3 py-2 text-sm hover:border-brand/30 hover:bg-brand-soft/30"
           >
-            <span className="font-medium text-slate-900">
-              {formatDate(a.slot.slot_date)} — {formatTime12(a.slot.start_time)} — {a.service.name}
+            <span className="flex flex-wrap items-center justify-between gap-2">
+              <span className="font-medium text-slate-900">
+                {formatDate(a.slot.slot_date)} — {formatTime12(a.slot.start_time)} — {a.service.name}
+              </span>
+              <AppointmentStatusBadge status={a.status} />
             </span>
             {a.slot.veterinarian && (
               <span className="mt-0.5 block text-slate-600">{a.slot.veterinarian.display_name}</span>

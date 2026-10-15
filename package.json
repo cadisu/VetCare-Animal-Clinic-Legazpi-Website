@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
+    "test": "vitest run",
     "create-privileged-user": "node --env-file=.env.local scripts/create-privileged-user.mjs"
   },
   "dependencies": {
@@ -28,6 +29,7 @@
     "eslint": "^9.39.5",
     "eslint-config-next": "^15.5.27",
     "tailwindcss": "^4.3.3",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.4"
   }
 }

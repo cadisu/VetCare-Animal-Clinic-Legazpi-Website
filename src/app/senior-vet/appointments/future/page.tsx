@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { AppointmentCard } from "@/components/appointments/AppointmentCard";
+import { AppointmentStatusNotice } from "@/components/appointments/AppointmentStatusNotice";
 import { Alert } from "@/components/ui/Alert";
 import { listFutureClinicAppointments } from "@/lib/appointments/server";
 import { requireRole } from "@/lib/auth/session";
@@ -10,7 +11,7 @@ export const metadata: Metadata = { title: "Future Appointments" };
 export default async function SeniorVetFutureAppointmentsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ completeError?: string; completed?: string }>;
+  searchParams: Promise<{ notice?: string; statusError?: string; completed?: string }>;
 }) {
   await requireRole(["SENIOR_VET"]);
   const params = await searchParams;
@@ -29,16 +30,7 @@ export default async function SeniorVetFutureAppointmentsPage({
       <h2 className="text-lg font-semibold text-slate-900">Future Appointments</h2>
       <p className="mt-1 text-sm text-slate-600">Upcoming visits after today, nearest first.</p>
 
-      {params.completed === "1" && (
-        <div className="mt-4">
-          <Alert variant="success">Appointment marked as completed.</Alert>
-        </div>
-      )}
-      {params.completeError && (
-        <div className="mt-4">
-          <Alert variant="error">{params.completeError}</Alert>
-        </div>
-      )}
+      <AppointmentStatusNotice notice={params.notice} statusError={params.statusError} completed={params.completed} />
       {loadError && (
         <div className="mt-4">
           <Alert variant="error">Future appointments could not be loaded. Refresh the page to try again.</Alert>
@@ -55,7 +47,8 @@ export default async function SeniorVetFutureAppointmentsPage({
                 appointment={appointment}
                 href="/senior-vet/appointments/future"
                 showClient
-                showMarkComplete
+                showStatusActions
+                actorRole="SENIOR_VET"
                 returnTo="/senior-vet/appointments/future"
               />
             </li>

@@ -25,12 +25,21 @@ export function slotStateLabel(state: SlotState | string): string {
 export const STATUS_LABELS: Record<AppointmentStatus, string> = {
   PENDING: "Pending",
   CONFIRMED: "Confirmed",
-  CHECKED_IN: "Checked in",
-  IN_CONSULTATION: "In consultation",
+  CHECKED_IN: "Checked In",
+  IN_CONSULTATION: "In Consultation",
   COMPLETED: "Completed",
   CANCELLED: "Cancelled",
-  NO_SHOW: "No show",
+  NO_SHOW: "No Show",
 };
+
+export function isAppointmentStatus(status: string): status is AppointmentStatus {
+  return (APPOINTMENT_STATUSES as readonly string[]).includes(status);
+}
+
+/** Readable label for a stored status, including an unknown-status fallback. */
+export function statusLabel(status: string): string {
+  return isAppointmentStatus(status) ? STATUS_LABELS[status] : "Unknown";
+}
 
 export const SOURCE_LABELS: Record<AppointmentSource, string> = {
   APPOINTMENT: "Appointment",
@@ -122,18 +131,6 @@ export function compareAppointmentsBySlotTime(a: AppointmentListRow, b: Appointm
   const da = appointmentSlotStartMs(a.slot.slot_date, a.slot.start_time);
   const db = appointmentSlotStartMs(b.slot.slot_date, b.slot.start_time);
   return da - db;
-}
-
-/** True when staff may use Mark Service as Finished (UI hint; RPC enforces). */
-export function canStaffCompleteAppointment(appointment: AppointmentListRow): boolean {
-  if (TERMINAL_STATUSES.includes(appointment.status)) return false;
-  if (appointment.slot.requires_vet_acceptance && appointment.status === "PENDING") return false;
-  return (
-    appointment.status === "PENDING" ||
-    appointment.status === "CONFIRMED" ||
-    appointment.status === "CHECKED_IN" ||
-    appointment.status === "IN_CONSULTATION"
-  );
 }
 
 export const CLIENT_UPCOMING_PREVIEW_LIMIT = 5;

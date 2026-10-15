@@ -9,16 +9,22 @@ export function ConfirmSubmitButton({
   confirmMessage,
   pendingText = "Please wait...",
   variant = "outline",
+  name,
+  value,
 }: {
   children: React.ReactNode;
   confirmMessage: string;
   pendingText?: string;
   variant?: "primary" | "secondary" | "outline" | "ghost";
+  name?: string;
+  value?: string;
 }) {
   const { pending } = useFormStatus();
   return (
     <button
       type="submit"
+      name={name}
+      value={value}
       disabled={pending}
       aria-busy={pending}
       onClick={(event) => {

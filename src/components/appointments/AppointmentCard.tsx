@@ -1,7 +1,7 @@
 import Link from "next/link";
+import { AppointmentStatusActions } from "@/components/appointments/AppointmentStatusActions";
 import { AppointmentStatusBadge } from "@/components/appointments/AppointmentStatusBadge";
 import { panelClass } from "@/components/ui/panel-styles";
-import { MarkCompleteButton } from "@/components/appointments/MarkCompleteButton";
 import { formatDate } from "@/lib/dates";
 import {
   formatTime12,
@@ -14,14 +14,16 @@ export function AppointmentCard({
   href,
   showClient,
   staffDay,
-  showMarkComplete,
+  showStatusActions,
+  actorRole,
   returnTo,
 }: {
   appointment: AppointmentListRow & { client?: { full_name: string } };
   href: string;
   showClient?: boolean;
   staffDay?: string;
-  showMarkComplete?: boolean;
+  showStatusActions?: boolean;
+  actorRole?: "STAFF" | "SENIOR_VET";
   returnTo?: string;
 }) {
   const { slot } = appointment;
@@ -51,12 +53,18 @@ export function AppointmentCard({
         </div>
         {slot.requires_vet_acceptance && appointment.status === "PENDING" && (
           <p className="mt-3 text-xs font-medium text-amber-800">
-            Awaiting veterinarian confirmation (Phase 4 will add the accept action).
+            Confirmation is required before this visit can be checked in.
           </p>
         )}
       </Link>
-      {showMarkComplete && (
-        <MarkCompleteButton appointment={appointment} day={staffDay} returnTo={returnTo} />
+      {showStatusActions && actorRole && (
+        <AppointmentStatusActions
+          role={actorRole}
+          appointmentId={appointment.id}
+          status={appointment.status}
+          day={staffDay}
+          returnTo={returnTo}
+        />
       )}
     </div>
   );

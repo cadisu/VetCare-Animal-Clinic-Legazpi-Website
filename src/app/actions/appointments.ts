@@ -4,11 +4,20 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import type { FormState } from "@/app/actions/auth";
-import type { AvailabilityRow } from "@/lib/appointments/constants";
+import type { AppointmentStatus, AvailabilityRow } from "@/lib/appointments/constants";
 import { fetchAvailability } from "@/lib/appointments/server";
+import {
+  appointmentNoticeCode,
+  appointmentTransitionErrorCode,
+} from "@/lib/appointments/transitions";
+import type { UserRole } from "@/lib/auth/roles";
 import { requireRole } from "@/lib/auth/session";
 import { isUuid } from "@/lib/pets/constants";
-import { bookAppointmentSchema, staffAppointmentSchema } from "@/lib/validation/appointment";
+import {
+  appointmentTransitionSchema,
+  bookAppointmentSchema,
+  staffAppointmentSchema,
+} from "@/lib/validation/appointment";
 import { createClient } from "@/lib/supabase/server";
 
 const GENERIC = "Something went wrong. Please try again.";
@@ -49,7 +58,9 @@ export async function bookAppointmentAction(_prev: FormState, formData: FormData
 
   revalidatePath("/client");
   revalidatePath("/client/appointments");
-  redirect(`/client/appointments/${data}`);
+  revalidatePath(`/client/appointments/${data}`);
+  revalidatePath(`/client/appointments/${data}/confirmed`);
+  redirect(`/client/appointments/${data}/confirmed`);
 }
 
 export async function createStaffAppointmentAction(
@@ -94,7 +105,12 @@ export async function createStaffAppointmentAction(
 
   revalidatePath("/staff");
   revalidatePath("/staff/appointments");
-  redirect(`/staff/appointments?day=${formData.get("day") ?? ""}`);
+  const day = String(formData.get("day") ?? "").trim();
+  const dayParam = /^\d{4}-\d{2}-\d{2}$/.test(day) ? day : "";
+  const qs = new URLSearchParams();
+  if (dayParam) qs.set("day", dayParam);
+  qs.set("created", String(data));
+  redirect(`/staff/appointments?${qs.toString()}`);
 }
 
 export async function fetchBookingAvailabilityAction(
@@ -141,35 +157,99 @@ export async function fetchBookingAvailabilityAction(
   }
 }
 
-export async function markAppointmentCompletedAction(formData: FormData): Promise<void> {
-  await requireRole(["STAFF", "SENIOR_VET"]);
-  const appointmentId = String(formData.get("appointmentId") ?? "").trim();
-  const returnDay = String(formData.get("day") ?? "").trim();
-  if (!appointmentId) return;
+function transitionDestination(
+  role: UserRole,
+  appointmentId: string,
+  requested: string,
+): { path: string; keepDay: boolean } {
+  if (role === "CLIENT") {
+    return { path: `/client/appointments/${appointmentId}`, keepDay: false };
+  }
+  if (requested === "/senior-vet/appointments" || requested === "/senior-vet/appointments/future") {
+    return { path: requested, keepDay: requested !== "/senior-vet/appointments/future" };
+  }
+  return { path: "/staff/appointments", keepDay: true };
+}
 
-  const supabase = await createClient();
-  const { error } = await supabase.rpc("mark_appointment_completed", {
-    p_appointment_id: appointmentId,
+function redirectWithAppointmentStatus(
+  path: string,
+  keepDay: boolean,
+  day: string | undefined,
+  notice: string | null,
+  statusError: string | null,
+): never {
+  const params = new URLSearchParams();
+  if (keepDay && day) params.set("day", day);
+  if (notice) params.set("notice", notice);
+  if (statusError) params.set("statusError", statusError);
+  const qs = params.toString();
+  redirect(qs ? `${path}?${qs}` : path);
+}
+
+function revalidateAppointmentViews(appointmentId: string) {
+  revalidatePath("/client", "layout");
+  revalidatePath("/staff", "layout");
+  revalidatePath("/senior-vet", "layout");
+  revalidatePath(`/client/appointments/${appointmentId}`);
+}
+
+export async function transitionAppointmentStatusAction(formData: FormData): Promise<void> {
+  const profile = await requireRole(["CLIENT", "STAFF", "SENIOR_VET"]);
+  const dayRaw = String(formData.get("day") ?? "").trim();
+  const reasonRaw = String(formData.get("reason") ?? "");
+  const parsed = appointmentTransitionSchema.safeParse({
+    appointmentId: String(formData.get("appointmentId") ?? "").trim(),
+    nextStatus: String(formData.get("nextStatus") ?? "").trim(),
+    reason: reasonRaw.trim() ? reasonRaw.trim() : undefined,
+    day: /^\d{4}-\d{2}-\d{2}$/.test(dayRaw) ? dayRaw : undefined,
+    returnTo: String(formData.get("returnTo") ?? ""),
   });
 
-  revalidatePath("/staff");
-  revalidatePath("/staff/appointments");
-  revalidatePath("/senior-vet");
-  revalidatePath("/senior-vet/appointments");
-  revalidatePath("/client");
-  revalidatePath("/client/appointments");
-  revalidatePath(`/client/appointments/${appointmentId}`);
+  if (!parsed.success) {
+    const path =
+      profile.role === "CLIENT"
+        ? "/client/appointments"
+        : profile.role === "SENIOR_VET"
+          ? "/senior-vet/appointments"
+          : "/staff/appointments";
+    redirectWithAppointmentStatus(path, false, undefined, null, "generic");
+  }
 
-  const requestedReturn = String(formData.get("returnTo") ?? "");
-  const destination =
-    requestedReturn === "/senior-vet/appointments" || requestedReturn === "/senior-vet/appointments/future"
-      ? requestedReturn
-      : "/staff/appointments";
+  const { appointmentId, nextStatus, reason, day, returnTo } = parsed.data;
+  const destination = transitionDestination(profile.role, appointmentId, returnTo ?? "");
+  const reasonForRpc =
+    profile.role !== "CLIENT" && nextStatus === "CANCELLED" ? reason ?? null : null;
 
-  const params = new URLSearchParams();
-  if (returnDay && destination !== "/senior-vet/appointments/future") params.set("day", returnDay);
-  if (error) params.set("completeError", error.message);
-  else params.set("completed", "1");
-  const qs = params.toString() ? `?${params.toString()}` : "";
-  redirect(`${destination}${qs}`);
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("transition_appointment_status", {
+    p_appointment_id: appointmentId,
+    p_next_status: nextStatus,
+    p_reason: reasonForRpc,
+  });
+
+  revalidateAppointmentViews(appointmentId);
+
+  if (error) {
+    redirectWithAppointmentStatus(
+      destination.path,
+      destination.keepDay,
+      day,
+      null,
+      appointmentTransitionErrorCode(error.message ?? ""),
+    );
+  }
+
+  redirectWithAppointmentStatus(
+    destination.path,
+    destination.keepDay,
+    day,
+    appointmentNoticeCode(nextStatus as AppointmentStatus),
+    null,
+  );
+}
+
+/** Preserved completion entry point. The RPC only completes IN_CONSULTATION appointments. */
+export async function markAppointmentCompletedAction(formData: FormData): Promise<void> {
+  formData.set("nextStatus", "COMPLETED");
+  await transitionAppointmentStatusAction(formData);
 }
