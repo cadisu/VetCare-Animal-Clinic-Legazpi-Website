@@ -29,6 +29,7 @@ export function AppointmentCard({
   showStaffActions,
   actorRole,
   returnTo,
+  detailsHref,
 }: {
   appointment: AppointmentListRow & { client?: { full_name: string } };
   href: string;
@@ -38,6 +39,7 @@ export function AppointmentCard({
   showStaffActions?: boolean;
   actorRole?: "STAFF" | "SENIOR_VET";
   returnTo?: string;
+  detailsHref?: string;
 }) {
   const { slot } = appointment;
   const summary = (
@@ -75,7 +77,7 @@ export function AppointmentCard({
       )}
       {showStaffActions && (
         <div className="mt-4 flex flex-wrap gap-2">
-          <Link href={`/staff/appointments/${appointment.id}`} className={buttonClass("outline", "md")}>
+          <Link href={detailsHref ?? `/staff/appointments/${appointment.id}`} className={buttonClass("outline", "md")}>
             View details
           </Link>
           {canSendReminder(appointment) && (

@@ -21,6 +21,7 @@ export function RescheduleSlotForm({
   requiresVeterinarian,
   veterinarians,
   initialSlots,
+  returnTo,
 }: {
   appointmentId: string;
   mode: "client" | "staff";
@@ -28,6 +29,7 @@ export function RescheduleSlotForm({
   requiresVeterinarian: boolean;
   veterinarians: VeterinarianRow[];
   initialSlots: AvailabilityRow[];
+  returnTo?: string;
 }) {
   const action = mode === "client" ? submitRescheduleRequestAction : rescheduleAppointmentAction;
   const [state, formAction] = useActionState(action, initial);
@@ -48,6 +50,7 @@ export function RescheduleSlotForm({
   return (
     <form action={formAction} className="mt-4 space-y-4">
       <input type="hidden" name="appointmentId" value={appointmentId} />
+      {returnTo && <input type="hidden" name="returnTo" value={returnTo} />}
       {state.error && <Alert variant="error">{state.error}</Alert>}
       {loadError && <Alert variant="error">{loadError}</Alert>}
       {requiresVeterinarian && (

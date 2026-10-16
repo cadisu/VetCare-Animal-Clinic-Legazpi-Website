@@ -81,9 +81,11 @@ export default async function SeniorVetTodayAppointmentsPage({
             <li key={appointment.id}>
               <AppointmentCard
                 appointment={appointment}
-                href={`/staff/appointments/${appointment.id}`}
+                href={`/senior-vet/appointments/${appointment.id}`}
+                detailsHref={`/senior-vet/appointments/${appointment.id}`}
                 showClient
                 showStatusActions
+                showStaffActions
                 actorRole="SENIOR_VET"
                 staffDay={day}
                 returnTo="/senior-vet/appointments"

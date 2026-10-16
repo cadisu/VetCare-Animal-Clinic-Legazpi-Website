@@ -31,7 +31,13 @@ export async function retrySmsAction(formData: FormData): Promise<void> {
   await requireRole(["STAFF", "SENIOR_VET"]);
   const smsId = String(formData.get("smsId") ?? "");
   const appointmentId = String(formData.get("appointmentId") ?? "");
-  const back = isUuid(appointmentId) ? `/staff/appointments/${appointmentId}` : "/staff/appointments/messages";
+  const requested = String(formData.get("returnTo") ?? "");
+  const back =
+    isSafeRedirectPath(requested) && (requested.startsWith("/staff/") || requested.startsWith("/senior-vet/"))
+      ? requested
+      : isUuid(appointmentId)
+        ? `/staff/appointments/${appointmentId}`
+        : "/staff/appointments/messages";
   if (!isUuid(smsId)) redirect(`${back}?flashError=${encodeURIComponent("This message cannot be retried.")}`);
 
   const supabase = await createClient();
@@ -59,7 +65,11 @@ export async function retrySmsAction(formData: FormData): Promise<void> {
   }
 
   revalidatePath("/staff/appointments/messages");
-  if (isUuid(appointmentId)) revalidatePath(`/staff/appointments/${appointmentId}`);
+  revalidatePath("/senior-vet/appointments/messages");
+  if (isUuid(appointmentId)) {
+    revalidatePath(`/staff/appointments/${appointmentId}`);
+    revalidatePath(`/senior-vet/appointments/${appointmentId}`);
+  }
   redirect(`${back}?flash=retried`);
 }
 
@@ -68,7 +78,8 @@ export async function sendAppointmentReminderNowAction(formData: FormData): Prom
   const appointmentId = String(formData.get("appointmentId") ?? "");
   const requested = String(formData.get("returnTo") ?? "");
   const back =
-    isSafeRedirectPath(requested) && requested.startsWith("/staff/")
+    isSafeRedirectPath(requested) &&
+    (requested.startsWith("/staff/") || requested.startsWith("/senior-vet/"))
       ? requested
       : isUuid(appointmentId)
         ? `/staff/appointments/${appointmentId}`
@@ -95,8 +106,13 @@ export async function sendAppointmentReminderNowAction(formData: FormData): Prom
   });
 
   revalidatePath("/staff", "layout");
+  revalidatePath("/senior-vet", "layout");
   revalidatePath("/staff/appointments/messages");
-  if (isUuid(appointmentId)) revalidatePath(`/staff/appointments/${appointmentId}`);
+  revalidatePath("/senior-vet/appointments/messages");
+  if (isUuid(appointmentId)) {
+    revalidatePath(`/staff/appointments/${appointmentId}`);
+    revalidatePath(`/senior-vet/appointments/${appointmentId}`);
+  }
   if (!result.ok) redirect(withQuery(back, "flashError", result.error));
   redirect(withQuery(back, "flash", "reminder_sent"));
 }

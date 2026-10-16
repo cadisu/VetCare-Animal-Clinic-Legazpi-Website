@@ -76,7 +76,7 @@ export async function AppointmentLogPanel({
 
   return (
     <>
-      <h2 className="text-lg font-semibold text-ink">Appointment Log</h2>
+      <h2 className="text-lg font-semibold text-ink">Appointment history log</h2>
       <p className="mt-1 text-sm text-muted">
         Every recorded appointment, including completed and cancelled visits.
       </p>

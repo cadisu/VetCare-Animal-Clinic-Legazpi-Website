@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { AppointmentLogPanel } from "@/components/appointments/AppointmentLogPanel";
 import { requireRole } from "@/lib/auth/session";
 
-export const metadata: Metadata = { title: "Appointment Log" };
+export const metadata: Metadata = { title: "Appointment history log" };
 
 export default async function StaffAppointmentLogPage({
   searchParams,

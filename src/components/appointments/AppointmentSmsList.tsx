@@ -32,10 +32,12 @@ export function AppointmentSmsList({
   messages,
   audience,
   appointmentId,
+  returnTo,
 }: {
   messages: AppointmentSmsRow[];
   audience: "client" | "staff";
   appointmentId?: string;
+  returnTo?: string;
 }) {
   if (messages.length === 0) {
     return <p className="mt-3 text-sm text-muted">No text messages for this appointment yet.</p>;
@@ -91,6 +93,7 @@ export function AppointmentSmsList({
               <form action={retrySmsAction} className="mt-4">
                 <input type="hidden" name="smsId" value={message.id} />
                 <input type="hidden" name="appointmentId" value={appointmentId} />
+                {returnTo && <input type="hidden" name="returnTo" value={returnTo} />}
                 <button type="submit" className={buttonClass("outline", "md")}>
                   Retry message
                 </button>

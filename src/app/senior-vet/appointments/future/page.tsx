@@ -6,7 +6,7 @@ import { listFutureClinicAppointments } from "@/lib/appointments/server";
 import { requireRole } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 
-export const metadata: Metadata = { title: "Future Appointments" };
+export const metadata: Metadata = { title: "Upcoming appointments" };
 
 export default async function SeniorVetFutureAppointmentsPage({
   searchParams,
@@ -27,8 +27,8 @@ export default async function SeniorVetFutureAppointmentsPage({
 
   return (
     <>
-      <h2 className="text-lg font-semibold text-slate-900">Future Appointments</h2>
-      <p className="mt-1 text-sm text-slate-600">Upcoming visits after today, nearest first.</p>
+      <h2 className="text-lg font-semibold text-ink">Upcoming appointments</h2>
+      <p className="mt-1 text-sm text-muted">Visits after today for every veterinarian, nearest first.</p>
 
       <AppointmentStatusNotice notice={params.notice} statusError={params.statusError} completed={params.completed} />
       {loadError && (
@@ -45,9 +45,11 @@ export default async function SeniorVetFutureAppointmentsPage({
             <li key={appointment.id}>
               <AppointmentCard
                 appointment={appointment}
-                href={`/staff/appointments/${appointment.id}`}
+                href={`/senior-vet/appointments/${appointment.id}`}
+                detailsHref={`/senior-vet/appointments/${appointment.id}`}
                 showClient
                 showStatusActions
+                showStaffActions
                 actorRole="SENIOR_VET"
                 returnTo="/senior-vet/appointments/future"
               />

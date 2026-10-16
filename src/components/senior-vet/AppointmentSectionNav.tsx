@@ -4,9 +4,11 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const TABS = [
-  { href: "/senior-vet/appointments", label: "Today", exact: true },
-  { href: "/senior-vet/appointments/future", label: "Future", exact: false },
-  { href: "/senior-vet/appointments/log", label: "Appointment Log", exact: false },
+  { href: "/senior-vet/appointments", label: "Today's appointment", exact: true },
+  { href: "/senior-vet/appointments/future", label: "Upcoming appointments", exact: false },
+  { href: "/senior-vet/appointments/requests", label: "Reschedule requests", exact: false },
+  { href: "/senior-vet/appointments/messages", label: "Text messages", exact: false },
+  { href: "/senior-vet/appointments/log", label: "Appointment history log", exact: false },
 ];
 
 export function AppointmentSectionNav() {

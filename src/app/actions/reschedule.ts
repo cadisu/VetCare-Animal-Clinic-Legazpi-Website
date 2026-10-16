@@ -145,7 +145,27 @@ export async function rescheduleAppointmentAction(_prev: FormState, formData: Fo
   if (error) return { error: rpcMessage(error) };
   await notifyIfPending(data);
   revalidateAppointment(appointmentId);
-  redirect(`/staff/appointments/${appointmentId}?flash=rescheduled`);
+  const requested = String(formData.get("returnTo") ?? "");
+  const detailPath = appointmentDetailPath(requested, appointmentId);
+  redirect(`${detailPath}?flash=rescheduled`);
+}
+
+function appointmentDetailPath(returnTo: string, appointmentId: string): string {
+  if (isUuid(appointmentId) && returnTo === `/senior-vet/appointments/${appointmentId}`) {
+    return returnTo;
+  }
+  return `/staff/appointments/${appointmentId}`;
+}
+
+function reviewTarget(returnTo: string, appointmentId: string, fallback: string): string {
+  if (returnTo === "detail" && isUuid(appointmentId)) return `/staff/appointments/${appointmentId}`;
+  if (returnTo === "/senior-vet/appointments/requests" || returnTo === "/staff/appointments/requests") {
+    return returnTo;
+  }
+  if (isUuid(appointmentId) && (returnTo === `/senior-vet/appointments/${appointmentId}` || returnTo === `/staff/appointments/${appointmentId}`)) {
+    return returnTo;
+  }
+  return fallback;
 }
 
 export async function approveRescheduleRequestAction(formData: FormData): Promise<void> {
@@ -153,7 +173,7 @@ export async function approveRescheduleRequestAction(formData: FormData): Promis
   const appointmentId = String(formData.get("appointmentId") ?? "");
   const requestId = String(formData.get("requestId") ?? "");
   const returnTo = String(formData.get("returnTo") ?? "");
-  if (!isUuid(requestId)) redirect("/staff/appointments/requests");
+  if (!isUuid(requestId)) redirect(reviewTarget(returnTo, appointmentId, "/staff/appointments/requests"));
 
   const supabase = await createClient();
   const { data, error } = await supabase.rpc("approve_reschedule_request", {
@@ -162,17 +182,11 @@ export async function approveRescheduleRequestAction(formData: FormData): Promis
   });
   if (isUuid(appointmentId)) revalidateAppointment(appointmentId);
   revalidatePath("/staff/appointments/requests");
-  if (error) {
-    const target = returnTo === "detail" && isUuid(appointmentId)
-      ? `/staff/appointments/${appointmentId}`
-      : "/staff/appointments/requests";
-    redirect(`${target}?flashError=${encodeURIComponent(rpcMessage(error))}`);
-  }
+  revalidatePath("/senior-vet/appointments/requests");
+  const target = reviewTarget(returnTo, appointmentId, "/staff/appointments/requests");
+  if (error) redirect(`${target}?flashError=${encodeURIComponent(rpcMessage(error))}`);
   await notifyIfPending(data);
-  const target = returnTo === "detail" && isUuid(appointmentId)
-    ? `/staff/appointments/${appointmentId}?flash=approved`
-    : "/staff/appointments/requests?flash=approved";
-  redirect(target);
+  redirect(`${target}?flash=approved`);
 }
 
 export async function rejectRescheduleRequestAction(formData: FormData): Promise<void> {
@@ -181,7 +195,7 @@ export async function rejectRescheduleRequestAction(formData: FormData): Promise
   const requestId = String(formData.get("requestId") ?? "");
   const note = String(formData.get("reviewNote") ?? "").trim();
   const returnTo = String(formData.get("returnTo") ?? "");
-  if (!isUuid(requestId)) redirect("/staff/appointments/requests");
+  if (!isUuid(requestId)) redirect(reviewTarget(returnTo, appointmentId, "/staff/appointments/requests"));
   const supabase = await createClient();
   const { error } = await supabase.rpc("reject_reschedule_request", {
     p_request_id: requestId,
@@ -189,9 +203,8 @@ export async function rejectRescheduleRequestAction(formData: FormData): Promise
   });
   if (isUuid(appointmentId)) revalidateAppointment(appointmentId);
   revalidatePath("/staff/appointments/requests");
-  const target = returnTo === "detail" && isUuid(appointmentId)
-    ? `/staff/appointments/${appointmentId}`
-    : "/staff/appointments/requests";
+  revalidatePath("/senior-vet/appointments/requests");
+  const target = reviewTarget(returnTo, appointmentId, "/staff/appointments/requests");
   if (error) redirect(`${target}?flashError=${encodeURIComponent(rpcMessage(error))}`);
   redirect(`${target}?flash=rejected`);
 }

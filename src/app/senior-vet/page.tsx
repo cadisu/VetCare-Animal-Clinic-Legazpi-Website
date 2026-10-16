@@ -76,14 +76,24 @@ export default async function SeniorVetDashboardPage() {
             <ul className="mt-4 space-y-2">
               {todayPreview.map((appointment) => (
                 <li key={appointment.id}>
-                  <AppointmentCard appointment={appointment} href="/senior-vet/appointments" showClient />
+                  <AppointmentCard
+                    appointment={appointment}
+                    href={`/senior-vet/appointments/${appointment.id}`}
+                    detailsHref={`/senior-vet/appointments/${appointment.id}`}
+                    showClient
+                    showStatusActions
+                    showStaffActions
+                    actorRole="SENIOR_VET"
+                    staffDay={today}
+                    returnTo="/senior-vet"
+                  />
                 </li>
               ))}
             </ul>
           )}
           {todayAppointments.length > todayPreview.length && (
             <p className="mt-3 text-sm text-muted">
-              Showing {todayPreview.length} of {todayAppointments.length}. The rest are on the full Today view.
+              Showing {todayPreview.length} of {todayAppointments.length}. The rest are on Today&apos;s appointment.
             </p>
           )}
         </section>
@@ -91,8 +101,8 @@ export default async function SeniorVetDashboardPage() {
         <section className={panelPaddingClass()}>
           <div className="flex items-start justify-between gap-3">
             <div>
-              <h2 className="text-base font-semibold text-ink">Future Appointments</h2>
-              <p className="mt-1 text-sm text-muted">Upcoming visits after today, nearest first.</p>
+              <h2 className="text-base font-semibold text-ink">Upcoming appointments</h2>
+              <p className="mt-1 text-sm text-muted">Visits after today for every veterinarian, nearest first.</p>
             </div>
             <Link
               href="/senior-vet/appointments/future"
@@ -107,14 +117,23 @@ export default async function SeniorVetDashboardPage() {
             <ul className="mt-4 space-y-2">
               {futurePreview.map((appointment) => (
                 <li key={appointment.id}>
-                  <AppointmentCard appointment={appointment} href="/senior-vet/appointments/future" showClient />
+                  <AppointmentCard
+                    appointment={appointment}
+                    href={`/senior-vet/appointments/${appointment.id}`}
+                    detailsHref={`/senior-vet/appointments/${appointment.id}`}
+                    showClient
+                    showStatusActions
+                    showStaffActions
+                    actorRole="SENIOR_VET"
+                    returnTo="/senior-vet"
+                  />
                 </li>
               ))}
             </ul>
           )}
           {futureAppointments.length > futurePreview.length && (
             <p className="mt-3 text-sm text-muted">
-              Showing {futurePreview.length} of {futureAppointments.length}. The rest are on the full Future view.
+              Showing {futurePreview.length} of {futureAppointments.length}. The rest are on Upcoming appointments.
             </p>
           )}
         </section>
