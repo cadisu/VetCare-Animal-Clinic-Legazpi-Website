@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import { canRescheduleAppointment } from "@/lib/appointments/reschedule";
 import { dispatchReminders, type ReminderCandidate } from "@/lib/sms/dispatch";
 import { deliverClaimedMessage, type ClaimedSms } from "@/lib/sms/deliver";
+import { evaluateManualReminder, manualReminderClaimDate } from "@/lib/sms/manual-reminder";
 import { toUnisMsRecipient } from "@/lib/sms/phone";
 import {
   canManuallyRetry,
@@ -394,6 +395,38 @@ describe("reminder dispatch", () => {
       record: async () => undefined,
     });
     expect(summary.skipped).toBe(3);
+  });
+});
+
+describe("manual reminder", () => {
+  const base = {
+    status: "PENDING",
+    slotDate: "2026-10-20",
+    startTime: "09:00:00",
+    nowMs: new Date("2026-10-16T01:00:00.000Z").getTime(),
+    clinicName: "VetCare Veterinary Clinic",
+    templateError: null,
+    providerConfigured: true,
+    requiresVetAcceptance: false,
+    renderedContent: "Good day! This is a reminder.",
+    phoneValid: true,
+    existing: null,
+  };
+
+  it("allows an early pending reminder and claims the appointment date", () => {
+    expect(evaluateManualReminder(base)).toMatchObject({ ok: true, mode: "enqueue" });
+    expect(evaluateManualReminder({ ...base, status: "CONFIRMED" })).toMatchObject({ ok: true, mode: "enqueue" });
+    expect(manualReminderClaimDate("2026-10-20")).toBe("2026-10-20");
+  });
+
+  it("blocks ineligible statuses and an already sent reminder", () => {
+    expect(evaluateManualReminder({ ...base, status: "CHECKED_IN" }).ok).toBe(false);
+    expect(evaluateManualReminder({ ...base, status: "CANCELLED" }).ok).toBe(false);
+    const sent = evaluateManualReminder({
+      ...base,
+      existing: { id: "sms-1", status: "SENT", failureClass: "none", outcomeUncertain: false, providerStatus: "sent" },
+    });
+    expect(sent.ok).toBe(false);
   });
 });
 

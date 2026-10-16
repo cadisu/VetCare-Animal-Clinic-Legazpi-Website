@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 
 const TABS = [
   { href: "/staff/appointments", label: "Schedule", exact: true },
+  { href: "/staff/appointments/upcoming", label: "Upcoming", exact: false },
   { href: "/staff/appointments/requests", label: "Reschedule requests", exact: false },
   { href: "/staff/appointments/messages", label: "Text messages", exact: false },
   { href: "/staff/appointments/log", label: "History log", exact: false },

@@ -82,6 +82,7 @@ export type AppointmentListRow = {
   source: AppointmentSource;
   status: AppointmentStatus;
   over_capacity: boolean;
+  schedule_version: number;
   created_at: string;
   client_id: string;
   pet: { id: string; name: string; pet_number: number };

@@ -51,7 +51,7 @@ Server-only environment variables:
 - `CRON_SECRET` — Vercel sends `Authorization: Bearer <CRON_SECRET>` to the reminder job.
 - `SUPABASE_SERVICE_ROLE_KEY` — used only on the server by the reminder job and the webhook. Do not expose it to the browser.
 
-The daily job is `0 1 * * *` in `vercel.json`, which is 09:00 Asia/Manila (UTC+8, no daylight saving). Vercel Cron calls `GET /api/cron/appointment-reminders`.
+The daily job is `0 1 * * *` in `vercel.json`, which is 09:00 Asia/Manila (UTC+8, no daylight saving). Vercel Cron calls `GET /api/cron/appointment-reminders`. That job still reminds only for the next Philippine calendar day. Staff and Senior Vet can also send the same appointment reminder early from an appointment detail page. A successful early send is stored for that schedule, so the daily job does not send a second one.
 
 After the UniSMS account exists:
 

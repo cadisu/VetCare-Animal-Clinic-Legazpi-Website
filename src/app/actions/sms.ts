@@ -6,9 +6,17 @@ import type { FormState } from "@/app/actions/auth";
 import { requireRole } from "@/lib/auth/session";
 import { reminderTemplateError } from "@/lib/sms/template";
 import type { ClaimedSms } from "@/lib/sms/deliver";
-import { deliverClaimedSms } from "@/lib/sms/job";
+import { deliverClaimedSms, sendAppointmentReminderNow } from "@/lib/sms/job";
+import { isSafeRedirectPath } from "@/lib/auth/roles";
 import { isUuid } from "@/lib/pets/constants";
 import { createClient } from "@/lib/supabase/server";
+
+function withQuery(path: string, key: string, value: string): string {
+  const [pathname, search] = path.split("?");
+  const params = new URLSearchParams(search ?? "");
+  params.set(key, value);
+  return `${pathname}?${params.toString()}`;
+}
 
 function rpcMessage(error: { message?: string } | null): string {
   const msg = error?.message ?? "";
@@ -53,6 +61,44 @@ export async function retrySmsAction(formData: FormData): Promise<void> {
   revalidatePath("/staff/appointments/messages");
   if (isUuid(appointmentId)) revalidatePath(`/staff/appointments/${appointmentId}`);
   redirect(`${back}?flash=retried`);
+}
+
+export async function sendAppointmentReminderNowAction(formData: FormData): Promise<void> {
+  await requireRole(["STAFF", "SENIOR_VET"]);
+  const appointmentId = String(formData.get("appointmentId") ?? "");
+  const requested = String(formData.get("returnTo") ?? "");
+  const back =
+    isSafeRedirectPath(requested) && requested.startsWith("/staff/")
+      ? requested
+      : isUuid(appointmentId)
+        ? `/staff/appointments/${appointmentId}`
+        : "/staff/appointments";
+  if (!isUuid(appointmentId)) {
+    redirect(`${back}?flashError=${encodeURIComponent("Appointment not found.")}`);
+  }
+
+  const supabase = await createClient();
+  const result = await sendAppointmentReminderNow(appointmentId, async (smsId) => {
+    const { data, error } = await supabase.rpc("claim_sms_manual_retry", { p_sms_id: smsId });
+    if (error || !data || typeof data !== "object") return null;
+    const row = data as Record<string, unknown>;
+    return {
+      id: String(row.id),
+      appointmentId: String(row.appointment_id),
+      content: String(row.content ?? ""),
+      recipientPhone: String(row.recipient_phone ?? ""),
+      messageType: String(row.message_type ?? ""),
+      scheduleVersion: Number(row.schedule_version ?? 0),
+      retryCount: Number(row.retry_count ?? 0),
+      referenceId: typeof row.reference_id === "string" ? row.reference_id : null,
+    };
+  });
+
+  revalidatePath("/staff", "layout");
+  revalidatePath("/staff/appointments/messages");
+  if (isUuid(appointmentId)) revalidatePath(`/staff/appointments/${appointmentId}`);
+  if (!result.ok) redirect(withQuery(back, "flashError", result.error));
+  redirect(withQuery(back, "flash", "reminder_sent"));
 }
 
 export async function updateReminderTemplateAction(_prev: FormState, formData: FormData): Promise<FormState> {

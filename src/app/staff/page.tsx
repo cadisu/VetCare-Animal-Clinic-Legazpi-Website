@@ -1,23 +1,43 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { AppointmentCard } from "@/components/appointments/AppointmentCard";
+import { AppointmentStatusNotice } from "@/components/appointments/AppointmentStatusNotice";
+import { FlashNotice } from "@/components/appointments/FlashNotice";
 import { DashboardHeading, PlaceholderCard } from "@/components/portal/PlaceholderCard";
 import { buttonClass } from "@/components/ui/button-styles";
 import { panelClass, panelPaddingClass } from "@/components/ui/panel-styles";
-import { listAppointmentsForDay } from "@/lib/appointments/server";
+import { CLIENT_UPCOMING_PREVIEW_LIMIT } from "@/lib/appointments/constants";
+import { listAppointmentsForDay, listFutureClinicAppointments } from "@/lib/appointments/server";
 import { requireRole } from "@/lib/auth/session";
 import { todayIso } from "@/lib/dates";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = { title: "Staff Dashboard" };
 
-export default async function StaffDashboardPage() {
+export default async function StaffDashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ flash?: string; flashError?: string; notice?: string; statusError?: string }>;
+}) {
   const profile = await requireRole(["STAFF", "SENIOR_VET"]);
+  const query = await searchParams;
   const firstName = profile.first_name || "team";
   const today = todayIso();
   const supabase = await createClient();
-  const todayAppointments = await listAppointmentsForDay(supabase, today);
+  const actorRole = profile.role === "SENIOR_VET" ? "SENIOR_VET" : "STAFF";
+  let todayAppointments: Awaited<ReturnType<typeof listAppointmentsForDay>> = [];
+  let futureAppointments: Awaited<ReturnType<typeof listFutureClinicAppointments>> = [];
+  try {
+    [todayAppointments, futureAppointments] = await Promise.all([
+      listAppointmentsForDay(supabase, today),
+      listFutureClinicAppointments(supabase),
+    ]);
+  } catch {
+    todayAppointments = [];
+    futureAppointments = [];
+  }
   const walkIns = todayAppointments.filter((a) => a.source === "WALK_IN");
+  const futurePreview = futureAppointments.slice(0, CLIENT_UPCOMING_PREVIEW_LIMIT);
 
   return (
     <>
@@ -25,6 +45,8 @@ export default async function StaffDashboardPage() {
         title={`Welcome, ${firstName}!`}
         subtitle="Today's clinic operations at a glance."
       />
+      <AppointmentStatusNotice notice={query.notice} statusError={query.statusError} />
+      <FlashNotice flash={query.flash} flashError={query.flashError} />
       <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
         <section className={panelPaddingClass("xl:col-span-2")}>
           <div className="flex items-start justify-between gap-3">
@@ -36,7 +58,16 @@ export default async function StaffDashboardPage() {
           <ul className="mt-4 space-y-2">
             {todayAppointments.slice(0, 5).map((a) => (
               <li key={a.id}>
-                <AppointmentCard appointment={a} href={`/staff/appointments?day=${today}`} showClient />
+                <AppointmentCard
+                  appointment={a}
+                  href={`/staff/appointments/${a.id}`}
+                  showClient
+                  showStaffActions
+                  showStatusActions
+                  actorRole={actorRole}
+                  staffDay={today}
+                  returnTo="/staff"
+                />
               </li>
             ))}
             {todayAppointments.length === 0 && (
@@ -68,6 +99,41 @@ export default async function StaffDashboardPage() {
           title="Analytics"
           description="Operational analytics will appear here."
         />
+        <section className={panelPaddingClass("xl:col-span-3")}>
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <h2 className="text-base font-semibold text-ink">Upcoming appointments</h2>
+              <p className="mt-1 text-sm text-muted">Visits after today for every veterinarian, nearest first.</p>
+            </div>
+            <Link href="/staff/appointments/upcoming" className="text-sm font-semibold text-brand hover:underline">
+              View all
+            </Link>
+          </div>
+          {futurePreview.length === 0 ? (
+            <p className="mt-4 text-sm text-muted">No upcoming appointments after today.</p>
+          ) : (
+            <ul className="mt-4 space-y-2">
+              {futurePreview.map((appointment) => (
+                <li key={appointment.id}>
+                  <AppointmentCard
+                    appointment={appointment}
+                    href={`/staff/appointments/${appointment.id}`}
+                    showClient
+                    showStaffActions
+                    showStatusActions
+                    actorRole={actorRole}
+                    returnTo="/staff"
+                  />
+                </li>
+              ))}
+            </ul>
+          )}
+          {futureAppointments.length > futurePreview.length && (
+            <p className="mt-3 text-sm text-muted">
+              Showing {futurePreview.length} of {futureAppointments.length}. The rest are on the Upcoming list.
+            </p>
+          )}
+        </section>
       </div>
     </>
   );

@@ -16,7 +16,7 @@ import {
 } from "./constants";
 
 export const APPOINTMENT_LIST_SELECT = `
-  id, source, status, over_capacity, created_at, client_id,
+  id, source, status, over_capacity, created_at, client_id, schedule_version,
   pet:pets!appointments_pet_id_fkey ( id, name, pet_number ),
   service:services!appointments_service_id_fkey ( id, name, requires_veterinarian ),
   slot:appointment_slots!appointments_slot_id_fkey (
@@ -99,6 +99,15 @@ export function splitClientAppointments(appointments: AppointmentListRow[]) {
     upcomingPreview: upcoming.slice(0, CLIENT_UPCOMING_PREVIEW_LIMIT),
     history,
   };
+}
+
+/** Keeps visits assigned to one veterinarian. Clinic-wide slots with no veterinarian are excluded. */
+export function filterAppointmentsForVeterinarian<T extends AppointmentListRow>(
+  rows: T[],
+  veterinarianId: string | null,
+): T[] {
+  if (!veterinarianId) return [];
+  return rows.filter((row) => row.slot.veterinarian?.id === veterinarianId);
 }
 
 /** profiles.id → veterinarians.profile_id → veterinarians.id (assigned vet on appointment_slots). */

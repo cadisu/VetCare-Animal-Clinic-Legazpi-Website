@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { AppointmentCard } from "@/components/appointments/AppointmentCard";
 import { AppointmentStatusNotice } from "@/components/appointments/AppointmentStatusNotice";
+import { FlashNotice } from "@/components/appointments/FlashNotice";
 import { buttonClass } from "@/components/ui/button-styles";
 import { FormField } from "@/components/ui/FormField";
 import { StaffAppointmentCreatedNotice } from "@/components/appointments/StaffAppointmentCreatedNotice";
@@ -23,6 +24,8 @@ export default async function StaffAppointmentsPage({
     statusError?: string;
     completed?: string;
     created?: string;
+    flash?: string;
+    flashError?: string;
   }>;
 }) {
   const profile = await requireRole(["STAFF", "SENIOR_VET"]);
@@ -44,6 +47,7 @@ export default async function StaffAppointmentsPage({
       <p className="mt-1 text-sm text-muted">Day view for {day}.</p>
 
       <AppointmentStatusNotice notice={params.notice} statusError={params.statusError} completed={params.completed} />
+      <FlashNotice flash={params.flash} flashError={params.flashError} />
       {createdAppointment && <StaffAppointmentCreatedNotice appointment={createdAppointment} />}
 
       <form method="get" className="mt-6 flex flex-wrap items-end gap-3">
@@ -77,8 +81,10 @@ export default async function StaffAppointmentsPage({
                 href={`/staff/appointments/${a.id}`}
                 showClient
                 showStatusActions
+                showStaffActions
                 actorRole={profile.role === "SENIOR_VET" ? "SENIOR_VET" : "STAFF"}
                 staffDay={day}
+                returnTo={`/staff/appointments?day=${day}`}
               />
             </li>
           ))

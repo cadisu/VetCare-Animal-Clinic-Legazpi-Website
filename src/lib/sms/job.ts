@@ -1,11 +1,20 @@
 import "server-only";
 import { clinic } from "@/config/clinic";
+import { formatTime12 } from "@/lib/appointments/constants";
+import { formatDate } from "@/lib/dates";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { ClaimedSms, SmsRecordPayload } from "@/lib/sms/deliver";
 import { deliverClaimedMessage } from "@/lib/sms/deliver";
 import { dispatchReminders, type DispatchSummary, type EnqueueSmsInput, type ReminderCandidate } from "@/lib/sms/dispatch";
+import { evaluateManualReminder, manualReminderClaimDate } from "@/lib/sms/manual-reminder";
+import { toUnisMsRecipient } from "@/lib/sms/phone";
 import { eventForProviderStatus } from "@/lib/sms/provider";
 import { nextManilaDateIso } from "@/lib/sms/schedule";
+import {
+  reminderTemplateError,
+  renderedMessageError,
+  renderReminderTemplate,
+} from "@/lib/sms/template";
 import { createUnisMsClient, unisMsConfigured } from "@/lib/sms/unisms";
 
 type AdminClient = NonNullable<ReturnType<typeof createAdminClient>>;
@@ -270,4 +279,128 @@ export async function runAppointmentReminderJob(now = new Date()): Promise<Dispa
     },
     record: (id, result) => recordResult(admin, id, result),
   });
+}
+
+function one<T>(value: T | T[] | null | undefined): T | null {
+  if (Array.isArray(value)) return value[0] ?? null;
+  return value ?? null;
+}
+
+/** Staff/Senior Vet early reminder. Uses the same reminder row as the daily job. */
+export async function sendAppointmentReminderNow(
+  appointmentId: string,
+  claimRetry: (smsId: string) => Promise<ClaimedSms | null>,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const admin = createAdminClient();
+  if (!admin) return { ok: false, error: "SMS tracking is not configured." };
+
+  const { data, error } = await admin
+    .from("appointments")
+    .select(
+      `id, status, schedule_version,
+       pet:pets!appointments_pet_id_fkey ( name, is_archived ),
+       service:services!appointments_service_id_fkey ( name ),
+       slot:appointment_slots!appointments_slot_id_fkey ( slot_date, start_time, requires_vet_acceptance ),
+       client:profiles!appointments_client_id_fkey ( contact_number )`,
+    )
+    .eq("id", appointmentId)
+    .maybeSingle();
+  if (error || !data) return { ok: false, error: "Appointment not found." };
+
+  const pet = one(data.pet as { name: string; is_archived: boolean } | { name: string; is_archived: boolean }[] | null);
+  const service = one(data.service as { name: string } | { name: string }[] | null);
+  const slot = one(
+    data.slot as
+      | { slot_date: string; start_time: string; requires_vet_acceptance: boolean }
+      | { slot_date: string; start_time: string; requires_vet_acceptance: boolean }[]
+      | null,
+  );
+  const client = one(data.client as { contact_number: string | null } | { contact_number: string | null }[] | null);
+  if (!pet || pet.is_archived || !service || !slot) {
+    return { ok: false, error: "This appointment cannot receive a reminder." };
+  }
+
+  const { data: template } = await admin.rpc("get_sms_reminder_template");
+  const templateBody = typeof template === "string" ? template : "";
+  const templateError = reminderTemplateError(templateBody);
+  const rendered = templateError
+    ? ""
+    : renderReminderTemplate(templateBody, {
+        petName: pet.name,
+        serviceName: service.name,
+        clinicName: clinic.name,
+        dateLabel: formatDate(slot.slot_date),
+        timeLabel: formatTime12(slot.start_time),
+      });
+  const lengthError = rendered ? renderedMessageError(rendered) : null;
+
+  const { data: existingRow } = await admin
+    .from("sms_messages")
+    .select("id, status, failure_class, outcome_uncertain, provider_status")
+    .eq("appointment_id", appointmentId)
+    .eq("message_type", "APPOINTMENT_REMINDER")
+    .eq("schedule_version", data.schedule_version)
+    .maybeSingle();
+
+  const decision = evaluateManualReminder({
+    status: data.status,
+    slotDate: slot.slot_date,
+    startTime: slot.start_time,
+    nowMs: Date.now(),
+    clinicName: clinic.name,
+    templateError: templateError ?? lengthError,
+    providerConfigured: Boolean(unisMsConfigured()),
+    requiresVetAcceptance: slot.requires_vet_acceptance,
+    renderedContent: rendered,
+    phoneValid: Boolean(toUnisMsRecipient(client?.contact_number)),
+    existing: existingRow
+      ? {
+          id: existingRow.id,
+          status: existingRow.status,
+          failureClass: existingRow.failure_class,
+          outcomeUncertain: existingRow.outcome_uncertain,
+          providerStatus: existingRow.provider_status,
+        }
+      : null,
+  });
+  if (!decision.ok) return { ok: false, error: decision.reason };
+
+  const phone = toUnisMsRecipient(client?.contact_number);
+  if (!phone) return { ok: false, error: "The client does not have a valid Philippine mobile number." };
+
+  let smsId = decision.smsId;
+  if (decision.mode === "enqueue") {
+    const { data: inserted, error: enqueueError } = await admin.rpc("enqueue_sms_message", {
+      p_appointment_id: appointmentId,
+      p_message_type: "APPOINTMENT_REMINDER",
+      p_content: rendered,
+      p_recipient_phone: phone,
+      p_status: "PENDING",
+      p_failure_class: "none",
+      p_error_detail: null,
+    });
+    if (enqueueError || typeof inserted !== "string") {
+      return { ok: false, error: "The reminder could not be prepared." };
+    }
+    smsId = inserted;
+  }
+
+  if (!smsId) return { ok: false, error: "The reminder could not be prepared." };
+
+  if (decision.mode === "retry") {
+    const claimed = await claimRetry(smsId);
+    if (!claimed) return { ok: false, error: "This reminder cannot be sent again yet." };
+    await deliverClaimedSms(claimed);
+    return { ok: true };
+  }
+
+  const { data: claimedData, error: claimError } = await admin.rpc("claim_sms_for_delivery", {
+    p_sms_id: smsId,
+    p_target_date: manualReminderClaimDate(slot.slot_date),
+  });
+  if (claimError) return { ok: false, error: "The reminder could not be sent." };
+  const claimed = asClaimed(claimedData);
+  if (!claimed) return { ok: false, error: "A reminder for this schedule is already in progress or was already sent." };
+  await deliverClaimedSms(claimed);
+  return { ok: true };
 }

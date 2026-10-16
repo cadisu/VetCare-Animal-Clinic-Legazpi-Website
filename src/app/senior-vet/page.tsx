@@ -4,7 +4,12 @@ import { AppointmentCard } from "@/components/appointments/AppointmentCard";
 import { DashboardHeading, PlaceholderCard } from "@/components/portal/PlaceholderCard";
 import { panelPaddingClass } from "@/components/ui/panel-styles";
 import { CLIENT_UPCOMING_PREVIEW_LIMIT } from "@/lib/appointments/constants";
-import { listAppointmentsForDay, listFutureClinicAppointments } from "@/lib/appointments/server";
+import {
+  filterAppointmentsForVeterinarian,
+  getVeterinarianIdForProfile,
+  listAppointmentsForDay,
+  listFutureClinicAppointments,
+} from "@/lib/appointments/server";
 import { requireRole } from "@/lib/auth/session";
 import { todayIso } from "@/lib/dates";
 import { createClient } from "@/lib/supabase/server";
@@ -19,12 +24,17 @@ export default async function SeniorVetDashboardPage() {
 
   let todayAppointments: Awaited<ReturnType<typeof listAppointmentsForDay>> = [];
   let futureAppointments: Awaited<ReturnType<typeof listFutureClinicAppointments>> = [];
+  let veterinarianId: string | null = null;
   let loadError = false;
   try {
-    [todayAppointments, futureAppointments] = await Promise.all([
+    const [dayRows, futureRows, linkedVetId] = await Promise.all([
       listAppointmentsForDay(supabase, today),
       listFutureClinicAppointments(supabase),
+      getVeterinarianIdForProfile(supabase, profile.id),
     ]);
+    veterinarianId = linkedVetId;
+    todayAppointments = filterAppointmentsForVeterinarian(dayRows, linkedVetId);
+    futureAppointments = futureRows;
   } catch {
     loadError = true;
   }
@@ -51,9 +61,11 @@ export default async function SeniorVetDashboardPage() {
             <div>
               <h2 className="text-base font-semibold text-ink">Today&apos;s Appointments</h2>
               <p className="mt-1 text-sm text-muted">
-                {todayAppointments.length === 0
-                  ? "No appointments for today."
-                  : `${todayAppointments.length} scheduled for today.`}
+                {!veterinarianId
+                  ? "Your account is not linked to a veterinarian, so your own visits cannot be listed."
+                  : todayAppointments.length === 0
+                    ? "No visits assigned to you today."
+                    : `${todayAppointments.length} assigned to you today.`}
               </p>
             </div>
             <Link href="/senior-vet/appointments" className="text-sm font-semibold text-brand hover:underline">

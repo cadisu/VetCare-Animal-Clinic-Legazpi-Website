@@ -2,12 +2,14 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { approveRescheduleRequestAction, rejectRescheduleRequestAction } from "@/app/actions/reschedule";
-import { AppointmentSmsList, type AppointmentSmsRow } from "@/components/appointments/AppointmentSmsList";
+import { sendAppointmentReminderNowAction } from "@/app/actions/sms";
+import type { AppointmentSmsRow } from "@/components/appointments/AppointmentSmsList";
 import { AppointmentStatusActions } from "@/components/appointments/AppointmentStatusActions";
 import { AppointmentStatusBadge } from "@/components/appointments/AppointmentStatusBadge";
 import { FlashNotice } from "@/components/appointments/FlashNotice";
 import { RescheduleSlotForm } from "@/components/appointments/RescheduleSlotForm";
 import { buttonClass } from "@/components/ui/button-styles";
+import { ConfirmSubmitButton } from "@/components/ui/ConfirmSubmitButton";
 import { panelClass } from "@/components/ui/panel-styles";
 import { appointmentSlotStartMs, formatTime12, SOURCE_LABELS } from "@/lib/appointments/constants";
 import { canRescheduleAppointment } from "@/lib/appointments/reschedule";
@@ -107,15 +109,35 @@ export default async function StaffAppointmentDetailPage({
             This visit is pending veterinarian acceptance. Rescheduling does not confirm it.
           </p>
         )}
-        <AppointmentStatusActions
-          role={profile.role === "SENIOR_VET" ? "SENIOR_VET" : "STAFF"}
-          appointmentId={appointment.id}
-          status={appointment.status}
-          returnTo={`/staff/appointments/${appointment.id}`}
-        />
-        <Link href="/staff/appointments" className={buttonClass("outline", "md", "mt-6 inline-flex")}>
-          Back to schedule
-        </Link>
+        <div className="mt-6 flex flex-wrap items-center gap-2">
+          <AppointmentStatusActions
+            inline
+            role={profile.role === "SENIOR_VET" ? "SENIOR_VET" : "STAFF"}
+            appointmentId={appointment.id}
+            status={appointment.status}
+            slotDate={slot.slot_date}
+            returnTo={`/staff/appointments/${appointment.id}`}
+          />
+          {canChange && !messages.some((message) =>
+            message.message_type === "APPOINTMENT_REMINDER" &&
+            message.schedule_version === appointment.schedule_version &&
+            (message.status === "SENT" || message.status === "QUEUED" || message.outcome_uncertain),
+          ) && (
+            <form action={sendAppointmentReminderNowAction}>
+              <input type="hidden" name="appointmentId" value={appointment.id} />
+              <ConfirmSubmitButton
+                variant="primary"
+                confirmMessage="Send the appointment reminder now? This uses SMS credits."
+                pendingText="Sending..."
+              >
+                Send Appointment Reminder
+              </ConfirmSubmitButton>
+            </form>
+          )}
+          <Link href="/staff/appointments" className={buttonClass("outline", "md")}>
+            Back to schedule
+          </Link>
+        </div>
       </section>
 
       <section className={panelClass("mt-6 p-6")}>
@@ -157,10 +179,6 @@ export default async function StaffAppointmentDetailPage({
         )}
       </section>
 
-      <section className={panelClass("mt-6 p-6")}>
-        <h2 className="text-lg font-semibold text-ink">Text messages</h2>
-        <AppointmentSmsList messages={messages} audience="staff" appointmentId={appointment.id} />
-      </section>
     </>
   );
 }
