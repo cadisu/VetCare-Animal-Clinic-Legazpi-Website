@@ -85,8 +85,9 @@ export type AppointmentListRow = {
   created_at: string;
   client_id: string;
   pet: { id: string; name: string; pet_number: number };
-  service: { id: string; name: string };
+  service: { id: string; name: string; requires_veterinarian: boolean };
   slot: {
+    id: string;
     slot_date: string;
     start_time: string;
     requires_vet_acceptance: boolean;

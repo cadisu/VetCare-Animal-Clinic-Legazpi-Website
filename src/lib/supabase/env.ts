@@ -1,7 +1,7 @@
 /**
  * Supabase public configuration. Only NEXT_PUBLIC_* values are read here, so this
- * file is safe to import from browser code. The service-role key is never used
- * by the web app (only by the admin bootstrap script).
+ * file is safe to import from browser code. The service-role key is read only by
+ * the server-only admin client used for reminder jobs and UniSMS webhooks.
  */
 
 export function getSupabaseEnv() {

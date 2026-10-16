@@ -18,9 +18,9 @@ import {
 export const APPOINTMENT_LIST_SELECT = `
   id, source, status, over_capacity, created_at, client_id,
   pet:pets!appointments_pet_id_fkey ( id, name, pet_number ),
-  service:services!appointments_service_id_fkey ( id, name ),
+  service:services!appointments_service_id_fkey ( id, name, requires_veterinarian ),
   slot:appointment_slots!appointments_slot_id_fkey (
-    slot_date, start_time, requires_vet_acceptance,
+    id, slot_date, start_time, requires_vet_acceptance,
     veterinarian:veterinarians ( id, display_name )
   )
 `;

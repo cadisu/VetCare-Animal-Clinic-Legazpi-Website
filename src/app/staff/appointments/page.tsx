@@ -74,7 +74,7 @@ export default async function StaffAppointmentsPage({
             <li key={a.id}>
               <AppointmentCard
                 appointment={a}
-                href="/staff/appointments"
+                href={`/staff/appointments/${a.id}`}
                 showClient
                 showStatusActions
                 actorRole={profile.role === "SENIOR_VET" ? "SENIOR_VET" : "STAFF"}

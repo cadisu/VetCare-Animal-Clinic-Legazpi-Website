@@ -3,23 +3,13 @@
 Next.js (App Router) + TypeScript + Tailwind CSS + Supabase (Auth + PostgreSQL).
 See `PROJECT_SPECIFICATION.md` (what) and `VETERINARY_CLINIC_IMPLEMENTATION_PHASES.md` (how/when).
 
-**Current status: Phase 3** - appointment scheduling with slot capacity, per-veterinarian and
-clinic-wide lanes, client booking, staff walk-ins / book-on-behalf, Senior Vet service CRUD and
-schedule configuration. Phases 1–2 (auth, roles, clients, pets) remain unchanged in behavior.
+**Current status: Phase 5** - SMS appointment reminders, SMS status tracking, and appointment rescheduling. Phases 1–4 (auth, pets, booking, and the appointment status workflow) remain in place.
 
 ## Setup
 
 1. Create a Supabase project.
-2. In the Supabase **SQL Editor**, run the migrations in order:
-   `supabase/migrations/20261001000000_phase1_profiles.sql`, then
-   `supabase/migrations/20261005000000_phase2_clients_pets.sql`, then
-   `supabase/migrations/20261006000000_phase3_appointments.sql`, then
-   `supabase/migrations/20261006100000_phase3_mark_complete.sql`, then
-   `supabase/migrations/20261008000000_phase3_pet_slot_availability.sql`, then
-   `supabase/migrations/20261008120000_public_bookable_services.sql`
-   (appointments, slots, services, veterinarians, booking RPCs, mark-complete RPC,
-   pet-specific already-booked slot state, public read of bookable services).
-3. Copy `.env.example` to `.env.local` and fill in your project URL, anon key and service-role key.
+2. In the Supabase **SQL Editor**, run the migrations in filename order from `supabase/migrations/`. That includes the Phase 4 status workflow and `20261016000000_phase5_sms_and_reschedule.sql`.
+3. Copy `.env.example` to `.env.local` and fill in the Supabase URL, anon key, and service-role key.
 4. In Supabase **Authentication -> URL Configuration**, set **Site URL** to `NEXT_PUBLIC_SITE_URL`
    and add `<site-url>/auth/callback` to **Redirect URLs** (for both localhost and production).
 5. `npm install`, then `npm run dev` and open http://localhost:3000.
@@ -49,7 +39,27 @@ To deactivate an account (Phase 1 has no UI for this), run in the SQL Editor:
 
 ## Scripts
 
-`npm run dev` | `npm run build` | `npm run lint` | `npm run typecheck`
+`npm run dev` | `npm run build` | `npm run lint` | `npm run typecheck` | `npm run test`
+
+## Phase 5 SMS reminders
+
+Server-only environment variables:
+
+- `UNISMS_API_SECRET_KEY` — UniSMS API secret. Sent as the Basic auth username with an empty password.
+- `UNISMS_SENDER_ID` — sender id from the UniSMS dashboard. The default test sender cannot reach every Philippine network.
+- `UNISMS_WEBHOOK_SECRET_KEY` — compared with the `webhook-secret-key` header. Leave it empty until the webhook is registered; the endpoint rejects every delivery until it is set.
+- `CRON_SECRET` — Vercel sends `Authorization: Bearer <CRON_SECRET>` to the reminder job.
+- `SUPABASE_SERVICE_ROLE_KEY` — used only on the server by the reminder job and the webhook. Do not expose it to the browser.
+
+The daily job is `0 1 * * *` in `vercel.json`, which is 09:00 Asia/Manila (UTC+8, no daylight saving). Vercel Cron calls `GET /api/cron/appointment-reminders`.
+
+After the UniSMS account exists:
+
+1. Apply `supabase/migrations/20261016000000_phase5_sms_and_reschedule.sql` if it is not already applied.
+2. Set the environment variables in Vercel and redeploy.
+3. Register `https://<production-host>/api/webhooks/unisms` in the UniSMS dashboard. UniSMS posts JSON and sends `webhook-secret-key` and `webhook-id`.
+
+Automated tests use mocked UniSMS responses. They do not send a live SMS, and they do not prove that the provider, the webhook, or the Vercel schedule has run.
 
 ## Replacing placeholder content
 

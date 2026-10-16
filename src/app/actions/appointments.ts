@@ -168,6 +168,9 @@ function transitionDestination(
   if (requested === "/senior-vet/appointments" || requested === "/senior-vet/appointments/future") {
     return { path: requested, keepDay: requested !== "/senior-vet/appointments/future" };
   }
+  if (/^\/staff\/appointments\/[0-9a-f-]{36}$/i.test(requested)) {
+    return { path: requested, keepDay: false };
+  }
   return { path: "/staff/appointments", keepDay: true };
 }
 

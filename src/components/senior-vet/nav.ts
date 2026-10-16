@@ -3,6 +3,7 @@ import {
   ClockIcon,
   DashboardIcon,
   FolderIcon,
+  PhoneIcon,
   UsersIcon,
 } from "@/components/ui/icons";
 import {
@@ -30,6 +31,7 @@ export const SENIOR_VET_NAV: readonly DashboardNavItem[] = [
   },
   { href: "/senior-vet/schedule", label: "Clinic schedule", icon: ClockIcon },
   { href: "/senior-vet/services", label: "Services", icon: FolderIcon },
+  { href: "/senior-vet/reminders", label: "Reminder message", icon: PhoneIcon },
 ];
 
 export const isSeniorVetNavActive = isDashboardNavActive;

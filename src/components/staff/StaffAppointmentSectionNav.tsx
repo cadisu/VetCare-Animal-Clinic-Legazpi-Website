@@ -5,6 +5,8 @@ import { usePathname } from "next/navigation";
 
 const TABS = [
   { href: "/staff/appointments", label: "Schedule", exact: true },
+  { href: "/staff/appointments/requests", label: "Reschedule requests", exact: false },
+  { href: "/staff/appointments/messages", label: "Text messages", exact: false },
   { href: "/staff/appointments/log", label: "History log", exact: false },
 ];
 
@@ -14,8 +16,10 @@ export function StaffAppointmentSectionNav() {
   return (
     <nav aria-label="Appointment views" className="-mb-px flex gap-1 overflow-x-auto border-b border-line">
       {TABS.map((tab) => {
-        const active =
-          tab.exact ? pathname === tab.href : pathname === tab.href || pathname.startsWith(`${tab.href}/`);
+        const active = tab.exact
+          ? pathname === tab.href ||
+            (tab.href === "/staff/appointments" && /^\/staff\/appointments\/[0-9a-f-]{36}$/i.test(pathname))
+          : pathname === tab.href || pathname.startsWith(`${tab.href}/`);
         return (
           <Link
             key={tab.href}
