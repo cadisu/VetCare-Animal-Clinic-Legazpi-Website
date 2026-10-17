@@ -39,9 +39,10 @@ export async function blockDateAction(_prev: FormState, formData: FormData): Pro
   });
   if (error) return { error: GENERIC, values: raw };
 
+  revalidatePath("/staff/schedule");
   revalidatePath("/senior-vet/schedule");
   revalidatePath("/staff/appointments/slots");
-  redirect("/senior-vet/schedule");
+  redirect("/staff/schedule");
 }
 
 export async function unblockDateAction(formData: FormData): Promise<void> {
@@ -49,6 +50,7 @@ export async function unblockDateAction(formData: FormData): Promise<void> {
   const id = String(formData.get("id") ?? "");
   const supabase = await createClient();
   await supabase.from("blocked_dates").delete().eq("id", id);
+  revalidatePath("/staff/schedule");
   revalidatePath("/senior-vet/schedule");
   revalidatePath("/staff/appointments/slots");
 }
@@ -81,7 +83,7 @@ export async function setSlotCapacityFormAction(formData: FormData): Promise<voi
 }
 
 export async function setSlotCapacityAction(_prev: FormState, formData: FormData): Promise<FormState> {
-  await requireRole(["SENIOR_VET"]);
+  await requireRole(["STAFF", "SENIOR_VET"]);
   const parsed = slotCapacitySchema.safeParse({
     slotId: String(formData.get("slotId") ?? ""),
     capacity: String(formData.get("capacity") ?? ""),
@@ -107,7 +109,7 @@ export async function publishSlotsFormAction(formData: FormData): Promise<void> 
 }
 
 export async function publishSlotsAction(_prev: FormState, formData: FormData): Promise<FormState> {
-  await requireRole(["SENIOR_VET"]);
+  await requireRole(["STAFF", "SENIOR_VET"]);
   const parsed = publishSlotsSchema.safeParse({
     fromDate: String(formData.get("fromDate") ?? ""),
     toDate: String(formData.get("toDate") ?? ""),
@@ -121,7 +123,8 @@ export async function publishSlotsAction(_prev: FormState, formData: FormData): 
   });
   if (error) return { error: error.message || GENERIC };
 
+  revalidatePath("/staff/schedule");
   revalidatePath("/senior-vet/schedule");
   revalidatePath("/staff/appointments/slots");
-  redirect("/senior-vet/schedule");
+  redirect("/staff/schedule");
 }

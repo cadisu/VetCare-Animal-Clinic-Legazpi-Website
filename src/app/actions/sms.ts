@@ -117,16 +117,28 @@ export async function sendAppointmentReminderNowAction(formData: FormData): Prom
   redirect(withQuery(back, "flash", "reminder_sent"));
 }
 
-export async function updateReminderTemplateAction(_prev: FormState, formData: FormData): Promise<FormState> {
-  await requireRole(["SENIOR_VET"]);
+export async function updateSmsTemplateAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  await requireRole(["STAFF", "SENIOR_VET"]);
+  const kind = String(formData.get("kind") ?? "");
   const body = String(formData.get("body") ?? "");
+  const values = { body, kind };
   const templateError = reminderTemplateError(body);
-  if (templateError) return { error: templateError, values: { body } };
+  if (templateError) return { error: templateError, values };
+  if (kind !== "reminder" && kind !== "reschedule") return { error: "Choose a message to save.", values };
 
   const supabase = await createClient();
-  const { error } = await supabase.rpc("update_sms_reminder_template", { p_body: body });
-  if (error) return { error: rpcMessage(error), values: { body } };
+  const rpc = kind === "reschedule" ? "update_sms_reschedule_template" : "update_sms_reminder_template";
+  const { error } = await supabase.rpc(rpc, { p_body: body });
+  if (error) return { error: rpcMessage(error), values };
 
+  revalidatePath("/staff/sms-templates");
   revalidatePath("/senior-vet/reminders");
-  redirect("/senior-vet/reminders?flash=template");
+  redirect(`/staff/sms-templates?flash=${kind}`);
+}
+
+export async function updateReminderTemplateAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const next = new FormData();
+  next.set("kind", "reminder");
+  next.set("body", String(formData.get("body") ?? ""));
+  return updateSmsTemplateAction(_prev, next);
 }

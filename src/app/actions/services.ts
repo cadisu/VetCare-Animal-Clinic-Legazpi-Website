@@ -30,7 +30,7 @@ export async function upsertServiceFormAction(formData: FormData): Promise<void>
 }
 
 export async function upsertServiceAction(_prev: FormState, formData: FormData): Promise<FormState> {
-  await requireRole(["SENIOR_VET"]);
+  await requireRole(["STAFF", "SENIOR_VET"]);
   const serviceId = String(formData.get("serviceId") ?? "").trim();
   const values = readService(formData);
   const parsed = serviceSchema.safeParse(values);
@@ -59,8 +59,9 @@ export async function upsertServiceAction(_prev: FormState, formData: FormData):
     if (error) return { error: GENERIC, values };
   }
 
+  revalidatePath("/staff/services");
   revalidatePath("/senior-vet/services");
   revalidatePath("/");
   revalidatePath("/services");
-  redirect("/senior-vet/services");
+  redirect("/staff/services");
 }

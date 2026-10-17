@@ -47,6 +47,11 @@ export default async function StaffDashboardPage({
       />
       <AppointmentStatusNotice notice={query.notice} statusError={query.statusError} />
       <FlashNotice flash={query.flash} flashError={query.flashError} />
+      <p className="mb-6 text-sm text-muted">
+        <Link href="/staff/sms-templates" className="font-semibold text-brand hover:underline">
+          Edit appointment SMS messages
+        </Link>
+      </p>
       <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
         <section className={panelPaddingClass("xl:col-span-2")}>
           <div className="flex items-start justify-between gap-3">

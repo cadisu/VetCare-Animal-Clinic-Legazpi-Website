@@ -29,9 +29,9 @@ export const SENIOR_VET_NAV: readonly DashboardNavItem[] = [
     icon: UsersIcon,
     alsoActive: ["/staff/pets"],
   },
-  { href: "/senior-vet/schedule", label: "Clinic schedule", icon: ClockIcon },
-  { href: "/senior-vet/services", label: "Services", icon: FolderIcon },
-  { href: "/senior-vet/reminders", label: "Reminder message", icon: PhoneIcon },
+  { href: "/staff/schedule", label: "Clinic schedule", icon: ClockIcon },
+  { href: "/staff/services", label: "Services", icon: FolderIcon },
+  { href: "/staff/sms-templates", label: "SMS templates", icon: PhoneIcon },
 ];
 
 export const isSeniorVetNavActive = isDashboardNavActive;

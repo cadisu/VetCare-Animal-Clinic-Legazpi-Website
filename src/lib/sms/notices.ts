@@ -7,6 +7,8 @@ export const SMS_FLASH: Record<string, string> = {
   retried: "The retry was recorded. Refresh the status before assuming the message was sent.",
   reminder_sent: "The reminder was submitted. Pending means UniSMS accepted it. Reported sent does not mean the phone received it.",
   template: "The reminder message was saved. Messages already created keep their original text.",
+  reminder: "The reminder message was saved. Messages already created keep their original text.",
+  reschedule: "The reschedule message was saved. Messages already created keep their original text.",
 };
 
 export function smsFlashMessage(code: string | undefined): string | null {

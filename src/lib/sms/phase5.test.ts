@@ -18,6 +18,7 @@ import {
 import { isReminderEligibleStatus, manilaDateIso, nextManilaDateIso, REMINDER_CRON_UTC } from "@/lib/sms/schedule";
 import {
   DEFAULT_REMINDER_TEMPLATE,
+  DEFAULT_RESCHEDULE_TEMPLATE,
   describesPendingAsConfirmed,
   reminderTemplateError,
   renderReminderTemplate,
@@ -102,6 +103,20 @@ describe("reminder template", () => {
     expect(rendered).toContain("[Service] has a Grooming appointment");
     expect(rendered).not.toContain("[Pet Name]");
     expect(reminderTemplateError(DEFAULT_REMINDER_TEMPLATE)).toBeNull();
+  });
+
+  it("accepts the default reschedule template", () => {
+    expect(reminderTemplateError(DEFAULT_RESCHEDULE_TEMPLATE)).toBeNull();
+    const rendered = renderReminderTemplate(DEFAULT_RESCHEDULE_TEMPLATE, {
+      petName: "Max",
+      serviceName: "General Checkup",
+      clinicName: "VetCare Veterinary Clinic",
+      dateLabel: "October 20, 2026",
+      timeLabel: "2:30 PM",
+    });
+    expect(rendered).toBe(
+      "Good day! Max's General Checkup appointment at VetCare Veterinary Clinic has been rescheduled to October 20, 2026 at 2:30 PM.",
+    );
   });
 
   it("rejects unknown placeholders and missing required ones", () => {

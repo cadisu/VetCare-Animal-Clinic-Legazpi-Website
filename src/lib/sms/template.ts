@@ -1,6 +1,9 @@
 export const DEFAULT_REMINDER_TEMPLATE =
   "Good day! This is a reminder that [Pet Name] has a [Service] appointment at [Clinic Name] on [Date] at [Time]. Please contact us if you need to reschedule.";
 
+export const DEFAULT_RESCHEDULE_TEMPLATE =
+  "Good day! [Pet Name]'s [Service] appointment at [Clinic Name] has been rescheduled to [Date] at [Time].";
+
 export const REMINDER_PLACEHOLDERS = ["[Pet Name]", "[Service]", "[Clinic Name]", "[Date]", "[Time]"] as const;
 
 const PLACEHOLDER_PATTERN = /\[(?:Pet Name|Service|Clinic Name|Date|Time)\]/g;
