@@ -135,4 +135,12 @@ export function compareAppointmentsBySlotTime(a: AppointmentListRow, b: Appointm
   return da - db;
 }
 
+/** Day lists: open visits first (pending through in consultation), finished visits last, then by time. */
+export function compareAppointmentsForDay(a: AppointmentListRow, b: AppointmentListRow): number {
+  const aFinished = TERMINAL_STATUSES.includes(a.status) ? 1 : 0;
+  const bFinished = TERMINAL_STATUSES.includes(b.status) ? 1 : 0;
+  if (aFinished !== bFinished) return aFinished - bFinished;
+  return compareAppointmentsBySlotTime(a, b);
+}
+
 export const CLIENT_UPCOMING_PREVIEW_LIMIT = 5;

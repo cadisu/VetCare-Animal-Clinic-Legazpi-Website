@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { formatAge } from "@/lib/dates";
-import { PET_GENDER_LABELS, petCode, speciesLabel, type Pet } from "@/lib/pets/constants";
+import { PET_GENDER_LABELS, speciesLabel, type Pet } from "@/lib/pets/constants";
 import { PetAvatar } from "./PetAvatar";
 
 export function PetCard({ pet, href, imageUrl }: { pet: Pet; href: string; imageUrl?: string }) {
@@ -27,7 +27,6 @@ export function PetCard({ pet, href, imageUrl }: { pet: Pet; href: string; image
           {PET_GENDER_LABELS[pet.gender]}
           {age ? ` · ${age}` : ""}
         </p>
-        <p className="mt-1 text-xs text-slate-400">{petCode(pet.pet_number)}</p>
       </div>
     </Link>
   );

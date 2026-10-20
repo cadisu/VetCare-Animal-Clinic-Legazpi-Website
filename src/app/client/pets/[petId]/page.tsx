@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { archivePetAction } from "@/app/actions/pets";
+import { MedicalRecords } from "@/components/clinical/MedicalRecords";
 import { PetProfile } from "@/components/pets/PetProfile";
 import { Alert } from "@/components/ui/Alert";
 import { buttonClass } from "@/components/ui/button-styles";
@@ -9,6 +10,11 @@ import { ConfirmSubmitButton } from "@/components/ui/ConfirmSubmitButton";
 import { requireRole } from "@/lib/auth/session";
 import { isUuid, PET_COLUMNS, type Pet } from "@/lib/pets/constants";
 import { listAppointmentsForPet } from "@/lib/appointments/server";
+import {
+  listClinicalRecords,
+  listVaccinationRecords,
+  listWeightRecords,
+} from "@/lib/clinical/server";
 import { getPetImageUrls } from "@/lib/pets/server";
 import { createClient } from "@/lib/supabase/server";
 
@@ -42,8 +48,13 @@ export default async function ClientPetPage({
     .maybeSingle();
   if (!data) notFound();
   const pet = data as Pet;
-  const imageUrls = await getPetImageUrls(supabase, [pet.image_path]);
-  const appointmentHistory = await listAppointmentsForPet(supabase, pet.id);
+  const [imageUrls, appointmentHistory, weights, clinical, vaccinations] = await Promise.all([
+    getPetImageUrls(supabase, [pet.image_path]),
+    listAppointmentsForPet(supabase, pet.id),
+    listWeightRecords(supabase, pet.id),
+    listClinicalRecords(supabase, pet.id),
+    listVaccinationRecords(supabase, pet.id),
+  ]);
 
   return (
     <>
@@ -76,6 +87,17 @@ export default async function ClientPetPage({
           }
           appointmentHistory={appointmentHistory}
           appointmentsHref="/client/appointments"
+          records={
+            <MedicalRecords
+              petId={pet.id}
+              returnTo={`/client/pets/${pet.id}`}
+              weights={weights}
+              clinical={clinical}
+              vaccinations={vaccinations}
+              canRecordWeight={false}
+              canEditMedical={false}
+            />
+          }
         />
       </div>
     </>

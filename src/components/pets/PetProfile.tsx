@@ -3,7 +3,7 @@ import { AppointmentStatusBadge } from "@/components/appointments/AppointmentSta
 import { PlaceholderCard } from "@/components/portal/PlaceholderCard";
 import { formatTime12, type AppointmentListRow } from "@/lib/appointments/constants";
 import { formatAge, formatDate } from "@/lib/dates";
-import { PET_GENDER_LABELS, petCode, speciesLabel, type Pet } from "@/lib/pets/constants";
+import { PET_GENDER_LABELS, speciesLabel, type Pet } from "@/lib/pets/constants";
 import { PetAvatar } from "./PetAvatar";
 
 function Detail({ label, value }: { label: string; value: React.ReactNode }) {
@@ -21,6 +21,7 @@ export function PetProfile({
   imageUrl,
   ownerName,
   actions,
+  records,
   appointmentHistory,
   appointmentsHref,
 }: {
@@ -29,6 +30,7 @@ export function PetProfile({
   /** Shown to Staff/Senior Vet. */
   ownerName?: React.ReactNode;
   actions?: React.ReactNode;
+  records?: React.ReactNode;
   appointmentHistory?: AppointmentListRow[];
   appointmentsHref?: string;
 }) {
@@ -50,7 +52,6 @@ export function PetProfile({
                     </span>
                   )}
                 </div>
-                <p className="mt-1 text-sm text-slate-500">{petCode(pet.pet_number)}</p>
               </div>
               {actions && <div className="flex flex-wrap gap-2">{actions}</div>}
             </div>
@@ -74,22 +75,7 @@ export function PetProfile({
       </section>
 
       <div className="grid gap-6 md:grid-cols-2">
-        <PlaceholderCard
-          title="Current Weight"
-          description="The latest recorded weight from the clinic's smart scale will appear here."
-        />
-        <PlaceholderCard
-          title="Weight History"
-          description="A history of weight readings will appear here."
-        />
-        <PlaceholderCard
-          title="Vaccination History"
-          description="Vaccinations recorded by the clinic will appear here."
-        />
-        <PlaceholderCard
-          title="Clinical Records"
-          description="Consultation and treatment records will appear here."
-        />
+        {records}
         {appointmentHistory && appointmentHistory.length > 0 ? (
           <section className="rounded-2xl border border-slate-200 bg-white p-6 md:col-span-2">
             <h2 className="text-base font-semibold text-slate-900">Appointment history</h2>

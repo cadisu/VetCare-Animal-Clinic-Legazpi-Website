@@ -7,6 +7,7 @@ import {
   BOOKING_WINDOW_DAYS,
   CLIENT_UPCOMING_PREVIEW_LIMIT,
   compareAppointmentsBySlotTime,
+  compareAppointmentsForDay,
   isClientUpcomingAppointment,
   type AppointmentListRow,
   type AppointmentStatus,
@@ -221,7 +222,7 @@ export async function listAppointmentsForDay(
         r.service.name.toLowerCase().includes(q),
     );
   }
-  return rows;
+  return rows.sort(compareAppointmentsForDay);
 }
 
 export async function getAppointmentById(

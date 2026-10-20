@@ -10,15 +10,25 @@ import { RescheduleSlotForm } from "@/components/appointments/RescheduleSlotForm
 import { buttonClass } from "@/components/ui/button-styles";
 import { ConfirmSubmitButton } from "@/components/ui/ConfirmSubmitButton";
 import { panelClass } from "@/components/ui/panel-styles";
+import { MedicalRecords } from "@/components/clinical/MedicalRecords";
+import type { VisitEntry } from "@/components/clinical/VisitRecords";
+import { Alert } from "@/components/ui/Alert";
 import { appointmentSlotStartMs, formatTime12, SOURCE_LABELS } from "@/lib/appointments/constants";
 import { canRescheduleAppointment } from "@/lib/appointments/reschedule";
 import {
   fetchAvailability,
   getAppointmentByIdWithClient,
+  getVeterinarianIdForProfile,
   listActiveVeterinarians,
 } from "@/lib/appointments/server";
 import { requireRole } from "@/lib/auth/session";
-import { formatDate } from "@/lib/dates";
+import { CLINICAL_NOTICES, isRecordableAppointmentStatus } from "@/lib/clinical/constants";
+import {
+  listClinicalRecords,
+  listVaccinationRecords,
+  listWeightRecords,
+} from "@/lib/clinical/server";
+import { formatDate, todayIso } from "@/lib/dates";
 import { createClient } from "@/lib/supabase/server";
 
 type RescheduleRequestRow = {
@@ -34,11 +44,15 @@ export async function AppointmentDetail({
   appointmentId,
   flash,
   flashError,
+  message,
+  entry,
   homePath,
 }: {
   appointmentId: string;
   flash?: string;
   flashError?: string;
+  message?: string;
+  entry?: string;
   homePath: "/staff/appointments" | "/senior-vet/appointments";
 }) {
   const profile = await requireRole(["STAFF", "SENIOR_VET"]);
@@ -57,7 +71,16 @@ export async function AppointmentDetail({
   const messages = (Array.isArray(smsData) ? smsData : []) as AppointmentSmsRow[];
   const requests = (Array.isArray(requestData) ? requestData : []) as RescheduleRequestRow[];
   const pending = requests.find((request) => request.status === "PENDING");
-  const veterinarians = appointment.service.requires_veterinarian ? await listActiveVeterinarians(supabase) : [];
+  const veterinarians = await listActiveVeterinarians(supabase);
+  const visitEntry: VisitEntry = entry === "vaccination" || entry === "revise" ? entry : "clinical";
+  const recordable = isRecordableAppointmentStatus(appointment.status);
+  const isSeniorVet = profile.role === "SENIOR_VET";
+  const [weights, clinical, vaccinations, linkedVetId] = await Promise.all([
+    listWeightRecords(supabase, appointment.pet.id),
+    listClinicalRecords(supabase, appointment.pet.id),
+    listVaccinationRecords(supabase, appointment.pet.id),
+    isSeniorVet ? getVeterinarianIdForProfile(supabase, profile.id) : Promise.resolve(null),
+  ]);
   let openSlots: Awaited<ReturnType<typeof fetchAvailability>> = [];
   if (canChange) {
     try {
@@ -138,8 +161,57 @@ export async function AppointmentDetail({
           <Link href={homePath} className={buttonClass("outline", "md")}>
             Back to schedule
           </Link>
+          {isSeniorVet && (appointment.status === "IN_CONSULTATION" || appointment.status === "COMPLETED") && (
+            <Link href="#visit-record" className={buttonClass("primary", "md")}>
+              Record visit
+            </Link>
+          )}
         </div>
       </section>
+
+      <div className="mt-6 grid gap-6 md:grid-cols-2">
+        <MedicalRecords
+          petId={appointment.pet.id}
+          returnTo={detailPath}
+          weights={weights}
+          clinical={clinical}
+          vaccinations={vaccinations}
+          canRecordWeight={recordable}
+          canEditMedical={false}
+          appointmentId={appointment.id}
+          showVisit={false}
+        />
+      </div>
+
+      {message && CLINICAL_NOTICES[message] && (
+        <div className="mt-6">
+          <Alert variant="success">{CLINICAL_NOTICES[message]}</Alert>
+        </div>
+      )}
+
+      <div className="mt-6">
+        <MedicalRecords
+          petId={appointment.pet.id}
+          returnTo={detailPath}
+          weights={weights}
+          clinical={clinical}
+          vaccinations={vaccinations}
+          canRecordWeight={false}
+          canEditMedical={isSeniorVet && recordable}
+          veterinarians={veterinarians}
+          appointmentId={appointment.id}
+          defaultVisitDate={slot.slot_date > todayIso() ? todayIso() : slot.slot_date}
+          defaultVeterinarianId={slot.veterinarian?.id ?? linkedVetId}
+          initialEntry={visitEntry}
+          prompt={isSeniorVet && (appointment.status === "IN_CONSULTATION" || appointment.status === "COMPLETED")}
+          showWeight={false}
+        />
+        <p className="mt-3 text-sm">
+          <Link href={`/staff/pets/${appointment.pet.id}`} className="font-semibold text-brand hover:underline">
+            Open {appointment.pet.name}&apos;s full record
+          </Link>
+        </p>
+      </div>
 
       <section className={panelClass("mt-6 p-6")}>
         <h2 className="text-lg font-semibold text-ink">Reschedule</h2>

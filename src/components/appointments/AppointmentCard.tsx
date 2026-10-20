@@ -80,6 +80,12 @@ export function AppointmentCard({
           <Link href={detailsHref ?? `/staff/appointments/${appointment.id}`} className={buttonClass("outline", "md")}>
             View details
           </Link>
+          {actorRole === "SENIOR_VET" &&
+            (appointment.status === "IN_CONSULTATION" || appointment.status === "COMPLETED") && (
+              <Link href={`${detailsHref ?? href}#visit-record`} className={buttonClass("primary", "md")}>
+                Record visit
+              </Link>
+            )}
           {canSendReminder(appointment) && (
             <form action={sendAppointmentReminderNowAction}>
               <input type="hidden" name="appointmentId" value={appointment.id} />

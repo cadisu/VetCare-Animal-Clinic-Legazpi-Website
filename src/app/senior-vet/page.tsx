@@ -150,10 +150,15 @@ export default async function SeniorVetDashboardPage() {
           />
           <PlaceholderCard title="Analytics" description="Complete clinic analytics will appear here." />
           <PlaceholderCard title="User Management" description="Manage client and staff accounts here." />
-          <PlaceholderCard
-            title="Clinical Records"
-            description="Official clinical and vaccination records will be managed here."
-          />
+          <section className={panelPaddingClass()}>
+            <h2 className="text-base font-semibold text-ink">Clinical Records</h2>
+            <p className="mt-3 text-sm text-muted">
+              Official clinical notes, vaccinations, and weight history are kept on each pet.
+            </p>
+            <Link href="/staff/clients" className="mt-4 inline-block text-sm font-semibold text-brand hover:underline">
+              Open client and pet records
+            </Link>
+          </section>
         </div>
       </div>
     </>
