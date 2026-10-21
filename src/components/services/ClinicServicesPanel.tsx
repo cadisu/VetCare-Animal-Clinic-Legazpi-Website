@@ -71,7 +71,12 @@ export async function ClinicServicesPanel({ editId }: { editId?: string }) {
               <option value="true">Yes</option>
               <option value="false">No</option>
             </SelectField>
-            <FormField label="Price (optional)" name="price" defaultValue={editing?.price ?? ""} />
+            <FormField
+              label="Price (optional)"
+              name="price"
+              hint="Required before this service can be added to a bill."
+              defaultValue={editing?.price ?? ""}
+            />
             <FormField
               label="Duration minutes (optional)"
               name="durationMinutes"

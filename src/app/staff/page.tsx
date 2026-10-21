@@ -95,7 +95,16 @@ export default async function StaffDashboardPage({
           <p className="mt-3 text-sm text-muted">Search clients and view their pets.</p>
           <p className="mt-4 text-sm font-semibold text-brand">Open clients →</p>
         </Link>
-        <PlaceholderCard title="POS" description="Point-of-sale checkout will be available here." />
+        <Link
+          href="/staff/pos"
+          className={panelClass("p-6 transition-colors hover:border-brand/40 hover:bg-highlight/80")}
+        >
+          <h2 className="text-base font-semibold text-ink">POS</h2>
+          <p className="mt-3 text-sm text-muted">
+            Record services, products, and the amount paid at the counter.
+          </p>
+          <p className="mt-4 text-sm font-semibold text-brand">Open POS →</p>
+        </Link>
         <PlaceholderCard
           title="Inventory"
           description="Stock levels and inventory alerts will appear here."
