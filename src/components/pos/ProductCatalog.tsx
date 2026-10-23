@@ -1,19 +1,19 @@
-import Link from "next/link";
-import { upsertProductAction } from "@/app/actions/pos";
+import { adjustStockAction, upsertProductAction } from "@/app/actions/pos";
+import { ProductImageField } from "@/components/pos/ProductImageField";
 import { PosSubmitButton } from "@/components/pos/PosSubmitButton";
-import { FormField, SelectField } from "@/components/ui/FormField";
+import { FormField, SelectField, TextAreaField } from "@/components/ui/FormField";
 import { panelClass, panelPaddingClass } from "@/components/ui/panel-styles";
 import { formatPeso } from "@/lib/pos/money";
-import type { CatalogProduct } from "@/lib/pos/types";
+import { PRODUCT_CATEGORIES, type CatalogProduct } from "@/lib/pos/types";
 
 export function ProductCatalog({
   products,
   editing,
-  canEdit,
+  imageUrls,
 }: {
   products: CatalogProduct[];
   editing: CatalogProduct | null;
-  canEdit: boolean;
+  imageUrls: Record<string, string>;
 }) {
   return (
     <div className="grid gap-8 lg:grid-cols-2">
@@ -31,93 +31,96 @@ export function ProductCatalog({
                 <th className="px-4 py-3">Price</th>
                 <th className="px-4 py-3">On hand</th>
                 <th className="px-4 py-3">Status</th>
-                {canEdit && <th className="px-4 py-3"> </th>}
+                <th className="px-4 py-3"> </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-line">
-              {products.map((product) => (
-                <tr key={product.id}>
-                  <td className="px-4 py-3">
-                    <span className="font-medium text-ink">{product.name}</span>
-                    <span className="mt-0.5 block text-xs text-muted">{product.unit}</span>
-                  </td>
-                  <td className="px-4 py-3">{formatPeso(product.price)}</td>
-                  <td className="px-4 py-3">{product.quantity_on_hand}</td>
-                  <td className="px-4 py-3">{product.is_active ? "Active" : "Inactive"}</td>
-                  {canEdit && (
-                    <td className="px-4 py-3 text-right">
-                      <Link href={`/staff/products?edit=${product.id}`} className="font-semibold text-brand hover:underline">
-                        Edit
-                      </Link>
+              {products.map((product) => {
+                const low =
+                  product.minimum_stock !== null && product.quantity_on_hand <= product.minimum_stock;
+                return (
+                  <tr key={product.id}>
+                    <td className="px-4 py-3">
+                      <span className="font-medium text-ink">{product.name}</span>
+                      <span className="mt-0.5 block text-xs text-muted">
+                        {product.category} · {product.unit}
+                      </span>
                     </td>
-                  )}
-                </tr>
-              ))}
+                    <td className="px-4 py-3">{formatPeso(product.price)}</td>
+                    <td className="px-4 py-3">
+                      {product.quantity_on_hand}
+                      {low ? <span className="mt-1 block text-xs font-semibold text-accent">Low stock</span> : null}
+                    </td>
+                    <td className="px-4 py-3">{product.is_active ? "Active" : "Inactive"}</td>
+                    <td className="px-4 py-3 text-right">
+                      <a href={`/staff/products?edit=${product.id}`} className="font-semibold text-brand hover:underline">
+                        Edit
+                      </a>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         )}
       </section>
 
-      <section className={panelPaddingClass()}>
-        {canEdit ? (
-          <>
-            <h2 className="text-base font-semibold text-ink">{editing ? "Edit product" : "Add product"}</h2>
+      <div className="space-y-6">
+        <section className={panelPaddingClass()}>
+          <h2 className="text-base font-semibold text-ink">{editing ? "Edit product" : "Add product"}</h2>
+          <p className="mt-2 text-sm text-muted">
+            An image is optional. Starting stock can be corrected until the first stock movement. After that, use Adjust stock.
+          </p>
+          <form action={upsertProductAction} className="mt-4 space-y-4">
+            {editing && <input type="hidden" name="productId" value={editing.id} />}
+            <FormField label="Name" name="name" required maxLength={120} defaultValue={editing?.name ?? ""} />
+            <SelectField label="Category" name="category" defaultValue={editing?.category ?? "General"}>
+              {PRODUCT_CATEGORIES.map((category) => (
+                <option key={category} value={category}>{category}</option>
+              ))}
+            </SelectField>
+            <TextAreaField label="Description" name="description" defaultValue={editing?.description ?? ""} />
+            <FormField label="Unit" name="unit" required maxLength={40} placeholder="piece, bottle, tablet" defaultValue={editing?.unit ?? ""} />
+            <FormField label="Price" name="price" required inputMode="decimal" defaultValue={editing ? String(editing.price) : ""} />
+            {editing?.has_sales ? (
+              <>
+                <input type="hidden" name="quantityOnHand" value={String(editing.quantity_on_hand)} />
+                <p className="text-sm text-muted">On hand: {editing.quantity_on_hand}. Use Adjust stock to change this number.</p>
+              </>
+            ) : (
+              <FormField label="Starting quantity" name="quantityOnHand" required inputMode="numeric" defaultValue={editing ? String(editing.quantity_on_hand) : "0"} />
+            )}
+            <FormField
+              label="Minimum stock"
+              name="minimumStock"
+              labelNote="(optional)"
+              inputMode="numeric"
+              defaultValue={editing?.minimum_stock === null || editing?.minimum_stock === undefined ? "" : String(editing.minimum_stock)}
+            />
+            <SelectField label="Active" name="isActive" defaultValue={editing?.is_active === false ? "false" : "true"}>
+              <option value="true">Yes</option>
+              <option value="false">No</option>
+            </SelectField>
+            <ProductImageField currentUrl={editing?.image_path ? imageUrls[editing.image_path] ?? null : null} />
+            <PosSubmitButton pendingText="Saving...">{editing ? "Save product" : "Add product"}</PosSubmitButton>
+          </form>
+        </section>
+
+        {editing && (
+          <section className={panelPaddingClass()}>
+            <h2 className="text-base font-semibold text-ink">Adjust stock</h2>
             <p className="mt-2 text-sm text-muted">
-              Starting stock can be corrected until the first sale. After that, quantity changes only when a bill
-              is completed or voided.
+              Use a positive number to add stock and a negative number to remove it. The reason is kept with the movement.
             </p>
-            <form action={upsertProductAction} className="mt-4 space-y-4">
-              {editing && <input type="hidden" name="productId" value={editing.id} />}
-              <FormField label="Name" name="name" required maxLength={120} defaultValue={editing?.name ?? ""} />
-              <FormField
-                label="Unit"
-                name="unit"
-                required
-                maxLength={40}
-                placeholder="piece, bottle, tablet"
-                defaultValue={editing?.unit ?? ""}
-              />
-              <FormField
-                label="Price"
-                name="price"
-                required
-                inputMode="decimal"
-                defaultValue={editing ? String(editing.price) : ""}
-              />
-              {editing?.has_sales ? (
-                <>
-                  <input type="hidden" name="quantityOnHand" value={String(editing.quantity_on_hand)} />
-                  <p className="text-sm text-muted">On hand: {editing.quantity_on_hand}. Sales have started, so this number is locked here.</p>
-                </>
-              ) : (
-                <FormField
-                  label="Starting quantity"
-                  name="quantityOnHand"
-                  required
-                  inputMode="numeric"
-                  defaultValue={editing ? String(editing.quantity_on_hand) : "0"}
-                />
-              )}
-              <SelectField
-                label="Active"
-                name="isActive"
-                defaultValue={editing?.is_active === false ? "false" : "true"}
-              >
-                <option value="true">Yes</option>
-                <option value="false">No</option>
-              </SelectField>
-              <PosSubmitButton pendingText="Saving...">{editing ? "Save product" : "Add product"}</PosSubmitButton>
+            <form action={adjustStockAction} className="mt-4 space-y-4">
+              <input type="hidden" name="productId" value={editing.id} />
+              <FormField label="Quantity change" name="delta" required placeholder="-2 or 5" />
+              <TextAreaField label="Reason" name="reason" required />
+              <PosSubmitButton pendingText="Saving...">Record adjustment</PosSubmitButton>
             </form>
-          </>
-        ) : (
-          <>
-            <h2 className="text-base font-semibold text-ink">Product list</h2>
-            <p className="mt-2 text-sm text-muted">
-              A Senior Vet maintains names, prices, and starting stock. You can sell active products from POS.
-            </p>
-          </>
+          </section>
         )}
-      </section>
+      </div>
     </div>
   );
 }

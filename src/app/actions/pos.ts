@@ -4,10 +4,28 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { requireRole } from "@/lib/auth/session";
-import { posErrorCode } from "@/lib/pos/notices";
+import { APPOINTMENT_LIST_SELECT } from "@/lib/appointments/server";
+import type { AppointmentListRow } from "@/lib/appointments/constants";
+import { formatTime12 } from "@/lib/appointments/constants";
+import { formatDate } from "@/lib/dates";
+import {
+  getProductImageUrls,
+  isProductImagePath,
+  readProductImage,
+  removeProductImage,
+  uploadProductImage,
+} from "@/lib/pos/images";
+import { posErrorCode, posErrorText } from "@/lib/pos/notices";
 import { isUuid } from "@/lib/pets/constants";
 import { createClient } from "@/lib/supabase/server";
-import { posReturnPath, productSchema, quantitySchema, voidReasonSchema } from "@/lib/validation/pos";
+import {
+  editCartSchema,
+  posReturnPath,
+  productSchema,
+  saveCartSchema,
+  stockAdjustmentSchema,
+  voidReasonSchema,
+} from "@/lib/validation/pos";
 
 function withCode(path: string, key: "error" | "notice", code: string): string {
   const [base, query = ""] = path.split("?");
@@ -29,13 +47,8 @@ function fail(path: string, error: { message?: string } | null): never {
   redirect(withCode(path, "error", posErrorCode(error?.message ?? "")));
 }
 
-function billPath(transactionId: string): string {
-  return `/staff/pos/${transactionId}`;
-}
-
-function readQuantity(formData: FormData): number | null {
-  const parsed = quantitySchema.safeParse(String(formData.get("quantity") ?? ""));
-  return parsed.success ? parsed.data : null;
+function cleanSearch(value: string): string {
+  return value.replace(/[,()%*\\"]/g, " ").replace(/\s+/g, " ").trim().slice(0, 60);
 }
 
 export async function openPosForAppointmentAction(formData: FormData): Promise<void> {
@@ -50,122 +63,156 @@ export async function openPosForAppointmentAction(formData: FormData): Promise<v
   });
   if (error || typeof data !== "string") fail(returnTo, error);
   refreshPos();
-  redirect(billPath(data));
+  redirect(`/staff/pos?bill=${data}`);
 }
 
-export async function openCounterSaleAction(formData: FormData): Promise<void> {
+export async function searchPosClientsAction(
+  query: string,
+): Promise<{ id: string; fullName: string; email: string }[]> {
   await requireRole(["STAFF", "SENIOR_VET"]);
-  const clientId = String(formData.get("clientId") ?? "");
-  const petValue = String(formData.get("petId") ?? "").trim();
-  const returnTo = posReturnPath(String(formData.get("returnTo") ?? ""), "/staff/pos");
-  if (!isUuid(clientId)) redirect(withCode(returnTo, "error", "client-missing"));
-  if (petValue && !isUuid(petValue)) redirect(withCode(returnTo, "error", "pet-owner"));
-
+  const q = cleanSearch(query);
+  if (q.length < 2) return [];
+  const pattern = `%${q}%`;
+  const filters = ["full_name", "last_name", "first_name", "email", "contact_number"].map(
+    (column) => `${column}.ilike."${pattern}"`,
+  );
   const supabase = await createClient();
-  const { data, error } = await supabase.rpc("pos_open_counter_sale", {
-    p_client_id: clientId,
-    p_pet_id: petValue || null,
-  });
-  if (error || typeof data !== "string") fail(returnTo, error);
-  refreshPos();
-  redirect(billPath(data));
+  const { data } = await supabase
+    .from("profiles")
+    .select("id, full_name, email")
+    .eq("role", "CLIENT")
+    .eq("status", "ACTIVE")
+    .or(filters.join(","))
+    .order("full_name", { ascending: true })
+    .limit(20);
+  return (data ?? []).map((row) => ({
+    id: row.id as string,
+    fullName: row.full_name as string,
+    email: row.email as string,
+  }));
 }
 
-export async function addServiceItemAction(formData: FormData): Promise<void> {
+export async function loadClientSaleContextAction(clientId: string, exceptTransactionId: string | null): Promise<{
+  pets: { id: string; name: string }[];
+  visits: {
+    id: string;
+    label: string;
+    petId: string;
+    petName: string;
+    serviceId: string;
+    serviceName: string;
+    servicePrice: number | null;
+    serviceBlocked: boolean;
+  }[];
+}> {
   await requireRole(["STAFF", "SENIOR_VET"]);
-  const transactionId = String(formData.get("transactionId") ?? "");
-  const serviceId = String(formData.get("serviceId") ?? "");
-  const path = isUuid(transactionId) ? billPath(transactionId) : "/staff/pos";
-  const quantity = readQuantity(formData);
-  if (!isUuid(transactionId) || !isUuid(serviceId) || quantity === null) {
-    redirect(withCode(path, "error", "bad-quantity"));
+  if (!isUuid(clientId)) return { pets: [], visits: [] };
+  const supabase = await createClient();
+  const [{ data: pets }, { data: visitRows }] = await Promise.all([
+    supabase.from("pets").select("id, name").eq("owner_id", clientId).eq("is_archived", false).order("name"),
+    supabase
+      .from("appointments")
+      .select(APPOINTMENT_LIST_SELECT)
+      .eq("client_id", clientId)
+      .in("status", ["IN_CONSULTATION", "COMPLETED"])
+      .order("created_at", { ascending: false })
+      .limit(20),
+  ]);
+  const visits = (visitRows ?? []) as unknown as AppointmentListRow[];
+  const blocked = await Promise.all(
+    visits.map((visit) =>
+      supabase
+        .from("pos_transactions")
+        .select("id, pos_transaction_items!inner(service_id)")
+        .eq("appointment_id", visit.id)
+        .neq("status", "VOIDED")
+        .neq("id", exceptTransactionId || "00000000-0000-0000-0000-000000000000"),
+    ),
+  );
+  return {
+    pets: (pets ?? []) as { id: string; name: string }[],
+    visits: visits.map((visit, index) => {
+      const rows = blocked[index]?.data ?? [];
+      const serviceBlocked = rows.some((row) => {
+        const items = row.pos_transaction_items as { service_id: string }[] | { service_id: string } | null;
+        const list = Array.isArray(items) ? items : items ? [items] : [];
+        return list.some((item) => item.service_id === visit.service.id);
+      });
+      return {
+        id: visit.id,
+        label: `${visit.service.name} · ${visit.pet.name} · ${formatDate(visit.slot.slot_date)} ${formatTime12(visit.slot.start_time)}`,
+        petId: visit.pet.id,
+        petName: visit.pet.name,
+        serviceId: visit.service.id,
+        serviceName: visit.service.name,
+        servicePrice: null,
+        serviceBlocked,
+      };
+    }),
+  };
+}
+
+export async function savePosCartAction(input: unknown): Promise<{ error: string } | void> {
+  await requireRole(["STAFF", "SENIOR_VET"]);
+  const parsed = saveCartSchema.safeParse(input);
+  if (!parsed.success) {
+    return { error: "Check the cart and try again." };
   }
-
+  const cart = parsed.data;
   const supabase = await createClient();
-  const { error } = await supabase.rpc("pos_add_service_item", {
-    p_transaction_id: transactionId,
-    p_service_id: serviceId,
-    p_quantity: quantity,
+  const { data, error } = await supabase.rpc("pos_save_cart", {
+    p_transaction_id: cart.transactionId,
+    p_client_id: cart.clientId,
+    p_pet_id: cart.petId,
+    p_appointment_id: cart.appointmentId,
+    p_walk_in_name: cart.clientId ? null : cart.walkInName,
+    p_walk_in_contact: cart.clientId ? null : cart.walkInContact || null,
+    p_items: cart.items.map((item) => ({
+      item_type: item.itemType,
+      service_id: item.itemType === "SERVICE" ? item.serviceId : null,
+      product_id: item.itemType === "PRODUCT" ? item.productId : null,
+      pet_id: item.petId,
+      quantity: item.quantity,
+    })),
+    p_pay: cart.pay,
+    p_amount_tendered: cart.pay ? cart.amountTendered : null,
   });
-  if (error) fail(path, error);
-  refreshPos();
-  redirect(path);
-}
-
-export async function addProductItemAction(formData: FormData): Promise<void> {
-  await requireRole(["STAFF", "SENIOR_VET"]);
-  const transactionId = String(formData.get("transactionId") ?? "");
-  const productId = String(formData.get("productId") ?? "");
-  const path = isUuid(transactionId) ? billPath(transactionId) : "/staff/pos";
-  const quantity = readQuantity(formData);
-  if (!isUuid(transactionId) || !isUuid(productId) || quantity === null) {
-    redirect(withCode(path, "error", "bad-quantity"));
+  if (error || typeof data !== "string") {
+    return { error: posErrorText(posErrorCode(error?.message ?? "")) ?? "Something went wrong. Please try again." };
   }
-
-  const supabase = await createClient();
-  const { error } = await supabase.rpc("pos_add_product_item", {
-    p_transaction_id: transactionId,
-    p_product_id: productId,
-    p_quantity: quantity,
-  });
-  if (error) fail(path, error);
   refreshPos();
-  redirect(path);
+  redirect(cart.pay ? `/staff/pos/${data}?notice=paid` : `/staff/pos?bill=${data}&notice=bill-saved`);
 }
 
-export async function setItemQuantityAction(formData: FormData): Promise<void> {
-  await requireRole(["STAFF", "SENIOR_VET"]);
-  const transactionId = String(formData.get("transactionId") ?? "");
-  const itemId = String(formData.get("itemId") ?? "");
-  const path = isUuid(transactionId) ? billPath(transactionId) : "/staff/pos";
-  const quantity = readQuantity(formData);
-  if (!isUuid(itemId) || quantity === null) redirect(withCode(path, "error", "bad-quantity"));
-
+export async function editCompletedPosAction(input: unknown): Promise<{ error: string } | void> {
+  await requireRole(["SENIOR_VET"]);
+  const parsed = editCartSchema.safeParse(input);
+  if (!parsed.success) return { error: "Check the items and the reason, then try again." };
+  const edit = parsed.data;
   const supabase = await createClient();
-  const { error } = await supabase.rpc("pos_set_item_quantity", {
-    p_item_id: itemId,
-    p_quantity: quantity,
+  const { error } = await supabase.rpc("pos_edit_completed_transaction", {
+    p_transaction_id: edit.transactionId,
+    p_reason: edit.reason,
+    p_items: edit.items.map((item) => ({
+      item_id: item.itemId,
+      item_type: item.itemType,
+      service_id: item.itemType === "SERVICE" ? item.serviceId : null,
+      product_id: item.itemType === "PRODUCT" ? item.productId : null,
+      pet_id: item.petId,
+      quantity: item.quantity,
+    })),
   });
-  if (error) fail(path, error);
+  if (error) {
+    return { error: posErrorText(posErrorCode(error.message)) ?? "Something went wrong. Please try again." };
+  }
   refreshPos();
-  redirect(path);
-}
-
-export async function removeItemAction(formData: FormData): Promise<void> {
-  await requireRole(["STAFF", "SENIOR_VET"]);
-  const transactionId = String(formData.get("transactionId") ?? "");
-  const itemId = String(formData.get("itemId") ?? "");
-  const path = isUuid(transactionId) ? billPath(transactionId) : "/staff/pos";
-  if (!isUuid(itemId)) redirect(withCode(path, "error", "transaction-missing"));
-
-  const supabase = await createClient();
-  const { error } = await supabase.rpc("pos_remove_item", { p_item_id: itemId });
-  if (error) fail(path, error);
-  refreshPos();
-  redirect(path);
-}
-
-export async function completePosAction(formData: FormData): Promise<void> {
-  await requireRole(["STAFF", "SENIOR_VET"]);
-  const transactionId = String(formData.get("transactionId") ?? "");
-  const path = isUuid(transactionId) ? billPath(transactionId) : "/staff/pos";
-  if (!isUuid(transactionId)) redirect(withCode(path, "error", "transaction-missing"));
-
-  const supabase = await createClient();
-  // The database computes the total and stores it as the amount paid.
-  // The form does not send a price or a total.
-  const { error } = await supabase.rpc("pos_complete_transaction", {
-    p_transaction_id: transactionId,
-  });
-  if (error) fail(path, error);
-  refreshPos();
-  redirect(withCode(path, "notice", "paid"));
+  redirect(`/staff/pos/${edit.transactionId}?notice=edited`);
 }
 
 export async function voidPosAction(formData: FormData): Promise<void> {
   await requireRole(["STAFF", "SENIOR_VET"]);
   const transactionId = String(formData.get("transactionId") ?? "");
-  const path = isUuid(transactionId) ? billPath(transactionId) : "/staff/pos";
+  const path = isUuid(transactionId) ? `/staff/pos/${transactionId}` : "/staff/pos";
   const reason = voidReasonSchema.safeParse(String(formData.get("reason") ?? ""));
   if (!isUuid(transactionId) || !reason.success) redirect(withCode(path, "error", "void-reason"));
 
@@ -180,38 +227,112 @@ export async function voidPosAction(formData: FormData): Promise<void> {
 }
 
 export async function upsertProductAction(formData: FormData): Promise<void> {
-  await requireRole(["SENIOR_VET"]);
+  await requireRole(["STAFF", "SENIOR_VET"]);
   const productId = String(formData.get("productId") ?? "").trim();
   const parsed = productSchema.safeParse({
     name: String(formData.get("name") ?? ""),
+    category: String(formData.get("category") ?? ""),
+    description: String(formData.get("description") ?? ""),
     unit: String(formData.get("unit") ?? ""),
     price: String(formData.get("price") ?? ""),
     quantityOnHand: String(formData.get("quantityOnHand") ?? ""),
+    minimumStock: String(formData.get("minimumStock") ?? ""),
     isActive: String(formData.get("isActive") ?? "true"),
   });
   if (!parsed.success) {
     const fields = z.flattenError(parsed.error).fieldErrors;
     const code = fields.name
       ? "product-name"
-      : fields.unit
-        ? "product-unit"
-        : fields.price
-          ? "product-price"
-          : "bad-quantity";
+      : fields.category
+        ? "product-category"
+        : fields.unit
+          ? "product-unit"
+          : fields.price
+            ? "product-price"
+            : fields.description
+              ? "product-description"
+              : fields.minimumStock
+                ? "min-stock"
+                : "bad-quantity";
     redirect(withCode("/staff/products", "error", code));
   }
   if (productId && !isUuid(productId)) redirect(withCode("/staff/products", "error", "product-unavailable"));
 
+  const image = await readProductImage(formData);
+  if (image.error) redirect(withCode("/staff/products", "error", "image-path"));
+
   const supabase = await createClient();
-  const { error } = await supabase.rpc("upsert_product", {
+  const { data, error } = await supabase.rpc("upsert_product", {
     p_product_id: productId || null,
     p_name: parsed.data.name,
     p_unit: parsed.data.unit,
     p_price: parsed.data.price,
     p_quantity_on_hand: parsed.data.quantityOnHand,
     p_is_active: parsed.data.isActive,
+    p_category: parsed.data.category,
+    p_description: parsed.data.description || null,
+    p_minimum_stock: parsed.data.minimumStock,
+  });
+  if (error || typeof data !== "string") fail("/staff/products", error);
+
+  const { data: existing } = await supabase.from("products").select("image_path").eq("id", data).maybeSingle();
+  const previousPath = (existing?.image_path as string | null) ?? null;
+  if (image.image) {
+    const path = await uploadProductImage(supabase, data, image.image);
+    if (!path) redirect(withCode("/staff/products", "error", "image-path"));
+    const { error: imageError } = await supabase.rpc("set_product_image", {
+      p_product_id: data,
+      p_image_path: path,
+    });
+    if (imageError) {
+      await removeProductImage(supabase, path);
+      fail("/staff/products", imageError);
+    }
+    if (previousPath && previousPath !== path) await removeProductImage(supabase, previousPath);
+  } else if (image.remove && previousPath) {
+    const { error: imageError } = await supabase.rpc("set_product_image", {
+      p_product_id: data,
+      p_image_path: null,
+    });
+    if (imageError) fail("/staff/products", imageError);
+    await removeProductImage(supabase, previousPath);
+  }
+
+  refreshPos();
+  redirect(withCode("/staff/products", "notice", "saved"));
+}
+
+export async function adjustStockAction(formData: FormData): Promise<void> {
+  await requireRole(["STAFF", "SENIOR_VET"]);
+  const parsed = stockAdjustmentSchema.safeParse({
+    productId: String(formData.get("productId") ?? ""),
+    delta: String(formData.get("delta") ?? ""),
+    reason: String(formData.get("reason") ?? ""),
+  });
+  if (!parsed.success) {
+    const fields = z.flattenError(parsed.error).fieldErrors;
+    redirect(withCode("/staff/products", "error", fields.reason ? "adjust-reason" : "bad-quantity"));
+  }
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("adjust_product_stock", {
+    p_product_id: parsed.data.productId,
+    p_delta: parsed.data.delta,
+    p_reason: parsed.data.reason,
   });
   if (error) fail("/staff/products", error);
   refreshPos();
-  redirect(withCode("/staff/products", "notice", "saved"));
+  redirect(withCode("/staff/products", "notice", "adjusted"));
+}
+
+export async function signProductImagesAction(paths: string[]): Promise<Record<string, string>> {
+  await requireRole(["STAFF", "SENIOR_VET"]);
+  const safe = paths.filter((path) => /^[0-9a-f-]{36}\/[0-9a-f-]{36}\.(jpg|png|webp)$/i.test(path));
+  const supabase = await createClient();
+  return getProductImageUrls(supabase, safe);
+}
+
+export async function clearUnusedImagePath(productId: string, path: string) {
+  if (!isUuid(productId) || !isProductImagePath(productId, path)) return;
+  const supabase = await createClient();
+  await removeProductImage(supabase, path);
 }

@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { canAccessPath } from "@/lib/auth/roles";
-import { lineSubtotal, transactionTotals } from "@/lib/pos/money";
+import { cashChange, lineSubtotal, transactionTotals } from "@/lib/pos/money";
 import { canBillAppointment, paymentLabel } from "@/lib/pos/status";
 import { posReturnPath, productSchema, quantitySchema } from "@/lib/validation/pos";
 
@@ -35,10 +35,11 @@ describe("phase 7 migration contract", () => {
     expect(migration).not.toContain("update public.appointments");
   });
 
-  it("does not trust a total sent by the browser", () => {
-    expect(actions).toContain("pos_complete_transaction");
-    expect(actions).not.toContain("p_amount");
+  it("does not trust a unit price or total sent by the browser", () => {
+    expect(actions).toContain("pos_save_cart");
+    expect(actions).toContain("p_amount_tendered");
     expect(actions).not.toContain("p_total");
+    expect(actions).not.toContain("p_unit_price");
   });
 });
 
@@ -46,6 +47,8 @@ describe("phase 7 totals and visit payment", () => {
   it("calculates line subtotals and keeps discount and reward at zero", () => {
     expect(lineSubtotal(199.99, 2)).toBe(399.98);
     expect(lineSubtotal(19.99, 3)).toBe(59.97);
+    expect(cashChange(150.5, 200)).toBe(49.5);
+    expect(cashChange(100, 99.99)).toBeNull();
     expect(transactionTotals([100, 50.5])).toEqual({
       subtotal: 150.5,
       discount: 0,
@@ -87,9 +90,11 @@ describe("phase 7 totals and visit payment", () => {
   it("accepts a product price and a sale quantity", () => {
     const parsed = productSchema.safeParse({
       name: "Pet shampoo",
+      category: "Supply",
       unit: "bottle",
       price: "150.50",
       quantityOnHand: "20",
+      minimumStock: "",
       isActive: "true",
     });
     expect(parsed.success).toBe(true);
@@ -99,6 +104,7 @@ describe("phase 7 totals and visit payment", () => {
     }
     expect(productSchema.safeParse({
       name: "",
+      category: "Supply",
       unit: "bottle",
       price: "10",
       quantityOnHand: "1",

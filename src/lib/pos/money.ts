@@ -25,6 +25,14 @@ export function transactionTotals(subtotals: number[]): {
   };
 }
 
+/** Change due when the customer pays the full total in cash. Null when the cash is short. */
+export function cashChange(total: number, tendered: number): number | null {
+  const amountDue = roundMoney(total);
+  const received = roundMoney(tendered);
+  if (received < amountDue) return null;
+  return roundMoney(received - amountDue);
+}
+
 export function formatPeso(value: number | string | null | undefined): string {
   const amount = typeof value === "number" ? value : Number(value ?? 0);
   return new Intl.NumberFormat("en-PH", {

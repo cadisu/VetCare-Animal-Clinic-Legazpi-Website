@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { PosNotice } from "@/components/pos/PosNotice";
+import { PosSectionLinks } from "@/components/pos/PosSectionLinks";
 import { DashboardHeading } from "@/components/portal/PlaceholderCard";
 import { buttonClass } from "@/components/ui/button-styles";
 import { panelClass } from "@/components/ui/panel-styles";
@@ -13,20 +14,25 @@ import { createClient } from "@/lib/supabase/server";
 export const metadata: Metadata = { title: "Transaction history" };
 
 function historyStatus(value: string | undefined): PosStatus[] {
-  if (value === "COMPLETED" || value === "VOIDED") return [value];
-  return ["COMPLETED", "VOIDED"];
+  if (value === "OPEN" || value === "COMPLETED" || value === "VOIDED") return [value];
+  return ["OPEN", "COMPLETED", "VOIDED"];
 }
 
 export default async function PosHistoryPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string; notice?: string; error?: string }>;
+  searchParams: Promise<{ status?: string; notice?: string; error?: string; q?: string; from?: string; to?: string }>;
 }) {
   await requireRole(["STAFF", "SENIOR_VET"]);
   const query = await searchParams;
   const statuses = historyStatus(query.status);
   const supabase = await createClient();
-  const rows = await listPosTransactions(supabase, statuses, 100);
+  const rows = await listPosTransactions(supabase, statuses, {
+    limit: 100,
+    query: query.q,
+    from: query.from,
+    to: query.to,
+  });
   const current = statuses.length === 1 ? statuses[0] : "ALL";
 
   return (
@@ -36,10 +42,24 @@ export default async function PosHistoryPage({
         subtitle="Completed and voided bills stay here. They are not deleted."
       />
       <PosNotice notice={query.notice} error={query.error} />
+      <PosSectionLinks current="history" />
+      <form className="mb-4 grid gap-3 sm:grid-cols-4" action="/staff/pos/history">
+        {query.status && <input type="hidden" name="status" value={query.status} />}
+        <input
+          name="q"
+          defaultValue={query.q ?? ""}
+          placeholder="Reference or customer"
+          className="min-h-11 rounded-lg border border-line px-3 text-sm"
+        />
+        <input name="from" type="date" defaultValue={query.from ?? ""} className="min-h-11 rounded-lg border border-line px-3 text-sm" />
+        <input name="to" type="date" defaultValue={query.to ?? ""} className="min-h-11 rounded-lg border border-line px-3 text-sm" />
+        <button type="submit" className={buttonClass("primary")}>Search</button>
+      </form>
       <div className="mb-6 flex flex-wrap gap-2">
         {(
           [
             ["ALL", "All"],
+            ["OPEN", "Open"],
             ["COMPLETED", "Completed"],
             ["VOIDED", "Voided"],
           ] as const
