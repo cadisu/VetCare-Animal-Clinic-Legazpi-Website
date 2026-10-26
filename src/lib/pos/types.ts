@@ -84,6 +84,9 @@ export type SellableProduct = {
   price: number | string;
   quantity_on_hand: number;
   minimum_stock: number | null;
+  supplier: string | null;
+  unit_cost: number | string | null;
+  sellable_quantity: number;
   image_path: string | null;
   is_active: boolean;
 };

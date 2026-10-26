@@ -30,7 +30,7 @@ export default async function ProductsPage({
     <>
       <DashboardHeading
         title="Products"
-        subtitle="Sellable items for the counter. This is not the full inventory module."
+        subtitle="Sellable items for the counter. Receive stock and review batches in Inventory."
       />
       <PosNotice notice={query.notice} error={query.error} />
       <ProductCatalog products={products} editing={editing} imageUrls={imageUrls} />

@@ -132,6 +132,13 @@ export const ProductIcon = (props: IconProps) => (
   </svg>
 );
 
+export const InventoryIcon = (props: IconProps) => (
+  <svg {...base(props)}>
+    <path d="M4 8h16v11H4V8Z" />
+    <path d="M4 12h16M8 8V5h8v3" />
+  </svg>
+);
+
 export const ChevronLeftIcon = (props: IconProps) => (
   <svg {...base(props)}>
     <path d="M14.5 6 8.5 12l6 6" />

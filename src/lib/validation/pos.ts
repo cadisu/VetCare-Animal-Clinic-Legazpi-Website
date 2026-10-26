@@ -40,6 +40,18 @@ export const productSchema = z.object({
     .transform((value) => (value ?? "").trim())
     .refine((value) => value === "" || (/^\d+$/.test(value) && Number(value) <= 1000000), "Enter a valid minimum stock")
     .transform((value) => (value === "" ? null : Number(value))),
+  supplier: z
+    .string()
+    .optional()
+    .transform((value) => (value ?? "").trim())
+    .refine((value) => value.length <= 120, "Supplier name is too long"),
+  unitCost: z
+    .string()
+    .optional()
+    .transform((value) => (value ?? "").trim())
+    .refine((value) => value === "" || /^\d+(\.\d{1,2})?$/.test(value), "Enter a valid cost")
+    .transform((value) => (value === "" ? null : Number(value)))
+    .refine((value) => value === null || value <= 9999999999.99, "Enter a valid cost"),
   isActive: z.enum(["true", "false"]).transform((value) => value === "true"),
 });
 

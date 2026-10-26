@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { AppointmentCard } from "@/components/appointments/AppointmentCard";
 import { DashboardHeading, PlaceholderCard } from "@/components/portal/PlaceholderCard";
+import { InventoryAlertCard } from "@/components/inventory/InventoryAlertCard";
 import { panelPaddingClass } from "@/components/ui/panel-styles";
 import { CLIENT_UPCOMING_PREVIEW_LIMIT } from "@/lib/appointments/constants";
 import {
@@ -12,6 +13,7 @@ import {
 } from "@/lib/appointments/server";
 import { requireRole } from "@/lib/auth/session";
 import { todayIso } from "@/lib/dates";
+import { listInventoryAlerts } from "@/lib/inventory/server";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = { title: "Senior Vet Dashboard" };
@@ -21,6 +23,7 @@ export default async function SeniorVetDashboardPage() {
   const firstName = profile.first_name || "Doc";
   const today = todayIso();
   const supabase = await createClient();
+  const alerts = await listInventoryAlerts(supabase);
 
   let todayAppointments: Awaited<ReturnType<typeof listAppointmentsForDay>> = [];
   let futureAppointments: Awaited<ReturnType<typeof listFutureClinicAppointments>> = [];
@@ -144,10 +147,7 @@ export default async function SeniorVetDashboardPage() {
             description="A summary of clinic activity will appear here."
           />
           <PlaceholderCard title="Revenue" description="Sales and revenue summaries will appear here." />
-          <PlaceholderCard
-            title="Inventory Alerts"
-            description="Low-stock and expiring items will appear here."
-          />
+          <InventoryAlertCard alerts={alerts} />
           <PlaceholderCard title="Analytics" description="Complete clinic analytics will appear here." />
           <PlaceholderCard title="User Management" description="Manage client and staff accounts here." />
           <section className={panelPaddingClass()}>

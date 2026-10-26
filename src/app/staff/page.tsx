@@ -4,12 +4,14 @@ import { AppointmentCard } from "@/components/appointments/AppointmentCard";
 import { AppointmentStatusNotice } from "@/components/appointments/AppointmentStatusNotice";
 import { FlashNotice } from "@/components/appointments/FlashNotice";
 import { DashboardHeading, PlaceholderCard } from "@/components/portal/PlaceholderCard";
+import { InventoryAlertCard } from "@/components/inventory/InventoryAlertCard";
 import { buttonClass } from "@/components/ui/button-styles";
 import { panelClass, panelPaddingClass } from "@/components/ui/panel-styles";
 import { CLIENT_UPCOMING_PREVIEW_LIMIT } from "@/lib/appointments/constants";
 import { listAppointmentsForDay, listFutureClinicAppointments } from "@/lib/appointments/server";
 import { requireRole } from "@/lib/auth/session";
 import { todayIso } from "@/lib/dates";
+import { listInventoryAlerts } from "@/lib/inventory/server";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = { title: "Staff Dashboard" };
@@ -24,6 +26,7 @@ export default async function StaffDashboardPage({
   const firstName = profile.first_name || "team";
   const today = todayIso();
   const supabase = await createClient();
+  const alerts = await listInventoryAlerts(supabase);
   const actorRole = profile.role === "SENIOR_VET" ? "SENIOR_VET" : "STAFF";
   let todayAppointments: Awaited<ReturnType<typeof listAppointmentsForDay>> = [];
   let futureAppointments: Awaited<ReturnType<typeof listFutureClinicAppointments>> = [];
@@ -105,10 +108,7 @@ export default async function StaffDashboardPage({
           </p>
           <p className="mt-4 text-sm font-semibold text-brand">Open POS →</p>
         </Link>
-        <PlaceholderCard
-          title="Inventory"
-          description="Stock levels and inventory alerts will appear here."
-        />
+        <InventoryAlertCard alerts={alerts} />
         <PlaceholderCard
           title="Analytics"
           description="Operational analytics will appear here."

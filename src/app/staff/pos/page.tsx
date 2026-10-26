@@ -55,7 +55,7 @@ export default async function PosHomePage({
       name: product.name,
       category: product.category,
       price: asMoney(product.price),
-      stock: product.quantity_on_hand,
+      stock: product.sellable_quantity,
       unit: product.unit,
       imageUrl: product.image_path ? images[product.image_path] ?? null : null,
       requiresVeterinarian: false,

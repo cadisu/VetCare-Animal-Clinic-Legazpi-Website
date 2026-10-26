@@ -246,7 +246,7 @@ export function PosRegister({
                       <p className="mt-1 text-sm font-semibold text-ink">{formatPeso(item.price)}</p>
                       {item.itemType === "PRODUCT" && (
                         <p className="text-xs text-muted">
-                          {item.stock} {item.unit} on hand{out ? " · out of stock" : ""}
+                          {item.stock} {item.unit} available{out ? " · out of stock" : ""}
                         </p>
                       )}
                     </div>

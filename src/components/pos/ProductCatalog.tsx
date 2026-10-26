@@ -1,8 +1,10 @@
-import { adjustStockAction, upsertProductAction } from "@/app/actions/pos";
+import Link from "next/link";
+import { upsertProductAction } from "@/app/actions/pos";
 import { ProductImageField } from "@/components/pos/ProductImageField";
 import { PosSubmitButton } from "@/components/pos/PosSubmitButton";
 import { FormField, SelectField, TextAreaField } from "@/components/ui/FormField";
 import { panelClass, panelPaddingClass } from "@/components/ui/panel-styles";
+import { stockLevel, STOCK_LEVEL_LABELS } from "@/lib/inventory/status";
 import { formatPeso } from "@/lib/pos/money";
 import { PRODUCT_CATEGORIES, type CatalogProduct } from "@/lib/pos/types";
 
@@ -36,8 +38,7 @@ export function ProductCatalog({
             </thead>
             <tbody className="divide-y divide-line">
               {products.map((product) => {
-                const low =
-                  product.minimum_stock !== null && product.quantity_on_hand <= product.minimum_stock;
+                const level = stockLevel(product.quantity_on_hand, product.minimum_stock);
                 return (
                   <tr key={product.id}>
                     <td className="px-4 py-3">
@@ -49,13 +50,21 @@ export function ProductCatalog({
                     <td className="px-4 py-3">{formatPeso(product.price)}</td>
                     <td className="px-4 py-3">
                       {product.quantity_on_hand}
-                      {low ? <span className="mt-1 block text-xs font-semibold text-accent">Low stock</span> : null}
+                      {level !== "OK" ? (
+                        <span className="mt-1 block text-xs font-semibold text-accent">{STOCK_LEVEL_LABELS[level]}</span>
+                      ) : null}
+                      {product.sellable_quantity !== product.quantity_on_hand ? (
+                        <span className="mt-1 block text-xs text-muted">{product.sellable_quantity} sellable</span>
+                      ) : null}
                     </td>
                     <td className="px-4 py-3">{product.is_active ? "Active" : "Inactive"}</td>
                     <td className="px-4 py-3 text-right">
                       <a href={`/staff/products?edit=${product.id}`} className="font-semibold text-brand hover:underline">
                         Edit
                       </a>
+                      <Link href={`/staff/inventory/${product.id}`} className="ml-3 font-semibold text-brand hover:underline">
+                        Stock
+                      </Link>
                     </td>
                   </tr>
                 );
@@ -69,7 +78,7 @@ export function ProductCatalog({
         <section className={panelPaddingClass()}>
           <h2 className="text-base font-semibold text-ink">{editing ? "Edit product" : "Add product"}</h2>
           <p className="mt-2 text-sm text-muted">
-            An image is optional. Starting stock can be corrected until the first stock movement. After that, use Adjust stock.
+            An image is optional. Starting stock can be corrected until the first stock movement. After that, record the change in Inventory.
           </p>
           <form action={upsertProductAction} className="mt-4 space-y-4">
             {editing && <input type="hidden" name="productId" value={editing.id} />}
@@ -81,11 +90,24 @@ export function ProductCatalog({
             </SelectField>
             <TextAreaField label="Description" name="description" defaultValue={editing?.description ?? ""} />
             <FormField label="Unit" name="unit" required maxLength={40} placeholder="piece, bottle, tablet" defaultValue={editing?.unit ?? ""} />
-            <FormField label="Price" name="price" required inputMode="decimal" defaultValue={editing ? String(editing.price) : ""} />
+            <FormField label="Supplier" name="supplier" labelNote="(optional)" maxLength={120} defaultValue={editing?.supplier ?? ""} />
+            <FormField label="Selling price" name="price" required inputMode="decimal" defaultValue={editing ? String(editing.price) : ""} />
+            <FormField
+              label="Unit cost"
+              name="unitCost"
+              labelNote="(optional)"
+              inputMode="decimal"
+              defaultValue={editing?.unit_cost === null || editing?.unit_cost === undefined ? "" : String(editing.unit_cost)}
+            />
             {editing?.has_sales ? (
               <>
                 <input type="hidden" name="quantityOnHand" value={String(editing.quantity_on_hand)} />
-                <p className="text-sm text-muted">On hand: {editing.quantity_on_hand}. Use Adjust stock to change this number.</p>
+                <p className="text-sm text-muted">
+                  On hand: {editing.quantity_on_hand}.{" "}
+                  <Link href={`/staff/inventory/${editing.id}`} className="font-semibold text-brand hover:underline">
+                    Record the next change in Inventory.
+                  </Link>
+                </p>
               </>
             ) : (
               <FormField label="Starting quantity" name="quantityOnHand" required inputMode="numeric" defaultValue={editing ? String(editing.quantity_on_hand) : "0"} />
@@ -105,21 +127,6 @@ export function ProductCatalog({
             <PosSubmitButton pendingText="Saving...">{editing ? "Save product" : "Add product"}</PosSubmitButton>
           </form>
         </section>
-
-        {editing && (
-          <section className={panelPaddingClass()}>
-            <h2 className="text-base font-semibold text-ink">Adjust stock</h2>
-            <p className="mt-2 text-sm text-muted">
-              Use a positive number to add stock and a negative number to remove it. The reason is kept with the movement.
-            </p>
-            <form action={adjustStockAction} className="mt-4 space-y-4">
-              <input type="hidden" name="productId" value={editing.id} />
-              <FormField label="Quantity change" name="delta" required placeholder="-2 or 5" />
-              <TextAreaField label="Reason" name="reason" required />
-              <PosSubmitButton pendingText="Saving...">Record adjustment</PosSubmitButton>
-            </form>
-          </section>
-        )}
       </div>
     </div>
   );

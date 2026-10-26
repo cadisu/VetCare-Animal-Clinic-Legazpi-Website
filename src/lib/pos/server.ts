@@ -1,5 +1,7 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { todayIso } from "@/lib/dates";
+import { listBatches, stockFacts } from "@/lib/inventory/server";
 import { isUuid } from "@/lib/pets/constants";
 import { isPosStatus, type PosStatus } from "@/lib/pos/status";
 import type { CatalogProduct, PosBill, PosEdit, PosItem, PosListRow, SellableProduct, SellableService } from "@/lib/pos/types";
@@ -198,25 +200,45 @@ export async function listSellableServices(supabase: SupabaseClient): Promise<Se
   return (data ?? []) as SellableService[];
 }
 
+const PRODUCT_COLUMNS =
+  "id, name, category, description, unit, price, quantity_on_hand, minimum_stock, supplier, unit_cost, image_path, is_active";
+
+async function withSellableQuantity(
+  supabase: SupabaseClient,
+  products: Omit<SellableProduct, "sellable_quantity">[],
+): Promise<SellableProduct[]> {
+  const today = todayIso();
+  const batches = await listBatches(supabase);
+  return products.map((product) => ({
+    ...product,
+    supplier: product.supplier ?? null,
+    unit_cost: product.unit_cost ?? null,
+    sellable_quantity: stockFacts(
+      product.quantity_on_hand,
+      product.minimum_stock,
+      batches.filter((batch) => batch.product_id === product.id),
+      today,
+    ).sellable,
+  }));
+}
+
 export async function listSellableProducts(supabase: SupabaseClient): Promise<SellableProduct[]> {
   const { data } = await supabase
     .from("products")
-    .select("id, name, category, description, unit, price, quantity_on_hand, minimum_stock, image_path, is_active")
+    .select(PRODUCT_COLUMNS)
     .eq("is_active", true)
     .order("name", { ascending: true });
-  return (data ?? []) as SellableProduct[];
+  return withSellableQuantity(supabase, (data ?? []) as Omit<SellableProduct, "sellable_quantity">[]);
 }
 
 export async function listCatalogProducts(supabase: SupabaseClient): Promise<CatalogProduct[]> {
   const [{ data: products }, { data: movements }] = await Promise.all([
-    supabase
-      .from("products")
-      .select("id, name, category, description, unit, price, quantity_on_hand, minimum_stock, image_path, is_active")
-      .order("name", { ascending: true }),
+    supabase.from("products").select(PRODUCT_COLUMNS).order("name", { ascending: true }),
     supabase.from("product_stock_movements").select("product_id"),
   ]);
   const sold = new Set((movements ?? []).map((row) => row.product_id as string));
-  return ((products ?? []) as SellableProduct[]).map((product) => ({
+  const priced = await withSellableQuantity(supabase, (products ?? []) as Omit<SellableProduct, "sellable_quantity">[]);
+  return priced.map((product) => ({
     ...product,
     has_sales: sold.has(product.id),
   }));

@@ -39,6 +39,9 @@ function withCode(path: string, key: "error" | "notice", code: string): string {
 function refreshPos() {
   revalidatePath("/staff/pos", "layout");
   revalidatePath("/staff/products");
+  revalidatePath("/staff/inventory", "layout");
+  revalidatePath("/staff");
+  revalidatePath("/senior-vet");
   revalidatePath("/staff/appointments", "layout");
   revalidatePath("/senior-vet/appointments", "layout");
 }
@@ -237,6 +240,8 @@ export async function upsertProductAction(formData: FormData): Promise<void> {
     price: String(formData.get("price") ?? ""),
     quantityOnHand: String(formData.get("quantityOnHand") ?? ""),
     minimumStock: String(formData.get("minimumStock") ?? ""),
+    supplier: String(formData.get("supplier") ?? ""),
+    unitCost: String(formData.get("unitCost") ?? ""),
     isActive: String(formData.get("isActive") ?? "true"),
   });
   if (!parsed.success) {
@@ -253,7 +258,11 @@ export async function upsertProductAction(formData: FormData): Promise<void> {
               ? "product-description"
               : fields.minimumStock
                 ? "min-stock"
-                : "bad-quantity";
+                : fields.unitCost
+                  ? "unit-cost"
+                  : fields.supplier
+                    ? "supplier"
+                    : "bad-quantity";
     redirect(withCode("/staff/products", "error", code));
   }
   if (productId && !isUuid(productId)) redirect(withCode("/staff/products", "error", "product-unavailable"));
@@ -272,6 +281,8 @@ export async function upsertProductAction(formData: FormData): Promise<void> {
     p_category: parsed.data.category,
     p_description: parsed.data.description || null,
     p_minimum_stock: parsed.data.minimumStock,
+    p_supplier: parsed.data.supplier || null,
+    p_unit_cost: parsed.data.unitCost,
   });
   if (error || typeof data !== "string") fail("/staff/products", error);
 
