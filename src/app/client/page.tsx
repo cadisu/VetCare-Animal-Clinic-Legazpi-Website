@@ -3,13 +3,16 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ClientUpcomingPreview } from "@/components/appointments/ClientUpcomingPreview";
 import { PetAvatar } from "@/components/pets/PetAvatar";
-import { DashboardHeading, PlaceholderCard } from "@/components/portal/PlaceholderCard";
+import { StampCard } from "@/components/loyalty/StampCard";
+import { DashboardHeading } from "@/components/portal/PlaceholderCard";
 import { buttonClass } from "@/components/ui/button-styles";
 import { panelPaddingClass } from "@/components/ui/panel-styles";
 import { listAppointmentsForClient, splitClientAppointments } from "@/lib/appointments/server";
 import { requireRole } from "@/lib/auth/session";
 import { formatDate } from "@/lib/dates";
 import { speciesLabel, PET_COLUMNS, type Pet } from "@/lib/pets/constants";
+import { nextMilestone, stampsRemaining } from "@/lib/loyalty/card";
+import { getClientCard } from "@/lib/loyalty/server";
 import { formatPeso } from "@/lib/pos/money";
 import { listClientReceipts } from "@/lib/pos/receipts";
 import { getPetImageUrls } from "@/lib/pets/server";
@@ -34,6 +37,10 @@ export default async function ClientDashboardPage() {
     await listAppointmentsForClient(supabase, profile.id),
   );
   const recentReceipts = (await listClientReceipts(supabase)).slice(0, 3);
+  const loyalty = await getClientCard(supabase);
+  const loyaltyLimit = loyalty.program?.stampLimit ?? 12;
+  const loyaltyLeft = stampsRemaining(loyalty.stampCount, loyalty.milestones, loyaltyLimit);
+  const loyaltyNext = nextMilestone(loyalty.stampCount, loyalty.milestones, loyaltyLimit);
 
   return (
     <>
@@ -99,10 +106,31 @@ export default async function ClientDashboardPage() {
             </ul>
           )}
         </section>
-        <PlaceholderCard
-          title="Loyalty"
-          description="Your digital stamp card and available rewards will appear here."
-        />
+        <section className={panelPaddingClass()}>
+          <div className="flex items-start justify-between gap-3">
+            <h2 className="text-base font-semibold text-ink">Loyalty</h2>
+            <Link href="/client/loyalty" className="text-sm font-semibold text-brand hover:underline">
+              View card
+            </Link>
+          </div>
+          {!loyalty.program?.isActive && loyalty.stampCount === 0 ? (
+            <p className="mt-3 text-sm text-muted">Your stamp card will appear here when the clinic loyalty program is active.</p>
+          ) : (
+            <>
+              <p className="mt-3 text-sm font-semibold text-ink">
+                {loyalty.stampCount} / {loyaltyLimit} stamps
+              </p>
+              <div className="mt-3">
+                <StampCard count={loyalty.stampCount} limit={loyaltyLimit} />
+              </div>
+              <p className="mt-3 text-sm text-muted">
+                {loyaltyLeft === 0
+                  ? "This card is full."
+                  : `${loyaltyLeft} to go${loyaltyNext ? ` for the ${loyaltyNext}-stamp reward` : ""}.`}
+              </p>
+            </>
+          )}
+        </section>
         <section className={panelPaddingClass()}>
           <div className="flex items-start justify-between gap-3">
             <h2 className="text-base font-semibold text-ink">Recent receipts</h2>

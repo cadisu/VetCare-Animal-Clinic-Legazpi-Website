@@ -54,7 +54,14 @@ export default async function ClientReceiptPage({
             ))}
           </tbody>
         </table>
-        <p className="px-4 py-4 text-right text-sm font-semibold text-ink">Amount paid {formatPeso(receipt.amountPaid)}</p>
+        <p className="px-4 py-4 text-right text-sm text-ink">
+          {Number(receipt.rewardAmount ?? 0) > 0 && (
+            <span className="mb-1 block font-normal text-muted">
+              {receipt.rewardLabel ? `Reward · ${receipt.rewardLabel}` : "Reward"} {formatPeso(receipt.rewardAmount)}
+            </span>
+          )}
+          <span className="font-semibold">Amount paid {formatPeso(receipt.amountPaid)}</span>
+        </p>
       </section>
     </>
   );

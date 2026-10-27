@@ -38,11 +38,22 @@ const POS_ERROR_PHRASES: Record<string, string> = {
   "Transaction not found": "transaction-missing",
   "Client not found": "client-missing",
   "Pet not found": "pet-missing",
-  "Not authorized": "not-authorized",
+  "This reward needs its service on the bill": "reward-service",
+  "This reward is on another open bill": "reward-held",
+  "This reward has expired": "reward-expired",
+  "This reward is no longer available": "reward-unavailable",
+  "This reward belongs to another client": "reward-owner",
+  "Choose a client before using a reward": "reward-client",
 };
 
 const POS_ERROR_TEXT: Record<string, string> = {
   "not-authorized": "You are not allowed to do that.",
+  "reward-service": "That reward only applies when its service is on the bill.",
+  "reward-held": "That reward is already on another open bill. Remove it there or void that unpaid bill.",
+  "reward-expired": "That reward has expired.",
+  "reward-unavailable": "That reward can no longer be used.",
+  "reward-owner": "That reward belongs to a different client.",
+  "reward-client": "Choose the client who owns the reward. Walk-in sales cannot use it.",
   "senior-void": "Only a Senior Vet can void a completed bill.",
   "senior-edit": "Only a Senior Vet can edit a completed bill.",
   "senior-product": "Only a Senior Vet can change the product list.",

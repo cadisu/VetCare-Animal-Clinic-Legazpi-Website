@@ -163,7 +163,7 @@ export async function savePosCartAction(input: unknown): Promise<{ error: string
   }
   const cart = parsed.data;
   const supabase = await createClient();
-  const { data, error } = await supabase.rpc("pos_save_cart", {
+  const { data, error } = await supabase.rpc("pos_save_cart_with_reward", {
     p_transaction_id: cart.transactionId,
     p_client_id: cart.clientId,
     p_pet_id: cart.petId,
@@ -179,6 +179,7 @@ export async function savePosCartAction(input: unknown): Promise<{ error: string
     })),
     p_pay: cart.pay,
     p_amount_tendered: cart.pay ? cart.amountTendered : null,
+    p_grant_id: cart.clientId ? cart.grantId : null,
   });
   if (error || typeof data !== "string") {
     return { error: posErrorText(posErrorCode(error?.message ?? "")) ?? "Something went wrong. Please try again." };

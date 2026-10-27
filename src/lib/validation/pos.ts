@@ -79,6 +79,7 @@ export const saveCartSchema = z.object({
   walkInContact: z.string().trim().max(40).optional().default(""),
   pay: z.boolean(),
   amountTendered: z.number().min(0).max(9999999999.99).nullable(),
+  grantId: optionalId,
   items: z
     .array(
       z.object({

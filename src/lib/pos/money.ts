@@ -7,8 +7,8 @@ export function lineSubtotal(unitPrice: number, quantity: number): number {
   return roundMoney(unitPrice * quantity);
 }
 
-/** Phase 7 keeps discount and reward at zero. Loyalty can fill them later. */
-export function transactionTotals(subtotals: number[]): {
+/** Discount stays zero. Pass a reward amount only as a display preview; the database calculates the amount due. */
+export function transactionTotals(subtotals: number[], rewardAmount = 0): {
   subtotal: number;
   discount: number;
   reward: number;
@@ -16,7 +16,7 @@ export function transactionTotals(subtotals: number[]): {
 } {
   const subtotal = roundMoney(subtotals.reduce((sum, amount) => sum + amount, 0));
   const discount = 0;
-  const reward = 0;
+  const reward = Math.min(Math.max(roundMoney(rewardAmount), 0), subtotal);
   return {
     subtotal,
     discount,

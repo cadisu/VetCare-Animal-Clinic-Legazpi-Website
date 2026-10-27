@@ -54,7 +54,10 @@ export function PosReceipt({
         <dl className="mt-4 space-y-2 text-sm">
           <div className="flex justify-between"><dt>Subtotal</dt><dd>{formatPeso(bill.subtotal)}</dd></div>
           <div className="flex justify-between"><dt>Discount</dt><dd>{formatPeso(0)}</dd></div>
-          <div className="flex justify-between"><dt>Reward</dt><dd>{formatPeso(0)}</dd></div>
+          <div className="flex justify-between">
+            <dt>{bill.reward_label ? `Reward · ${bill.reward_label}` : "Reward"}</dt>
+            <dd>{formatPeso(bill.reward_amount)}</dd>
+          </div>
           <div className="flex justify-between text-base font-semibold"><dt>Total</dt><dd>{formatPeso(bill.total)}</dd></div>
           {bill.amount_tendered !== null && (
             <>

@@ -139,6 +139,13 @@ export const InventoryIcon = (props: IconProps) => (
   </svg>
 );
 
+export const StampIcon = (props: IconProps) => (
+  <svg {...base(props)}>
+    <circle cx="12" cy="12" r="7" />
+    <path d="m9 12 2 2 4-4" />
+  </svg>
+);
+
 export const ChevronLeftIcon = (props: IconProps) => (
   <svg {...base(props)}>
     <path d="M14.5 6 8.5 12l6 6" />

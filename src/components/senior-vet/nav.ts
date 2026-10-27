@@ -5,6 +5,7 @@ import {
   FolderIcon,
   InventoryIcon,
   PhoneIcon,
+  StampIcon,
   PosIcon,
   UsersIcon,
 } from "@/components/ui/icons";
@@ -35,6 +36,7 @@ export const SENIOR_VET_NAV: readonly DashboardNavItem[] = [
   { href: "/staff/pos", label: "POS", icon: PosIcon },
   { href: "/staff/inventory", label: "Inventory", icon: InventoryIcon, alsoActive: ["/staff/inventory/history"] },
   { href: "/staff/services", label: "Services", icon: FolderIcon },
+  { href: "/senior-vet/loyalty", label: "Loyalty", icon: StampIcon },
   { href: "/staff/sms-templates", label: "SMS templates", icon: PhoneIcon },
 ];
 

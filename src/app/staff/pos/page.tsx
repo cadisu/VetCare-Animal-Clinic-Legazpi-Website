@@ -7,6 +7,7 @@ import { DashboardHeading } from "@/components/portal/PlaceholderCard";
 import { requireRole } from "@/lib/auth/session";
 import { getProductImageUrls } from "@/lib/pos/images";
 import { getPosBill, listBilledServiceIds, listSellableProducts, listSellableServices } from "@/lib/pos/server";
+import { listClientRewardOptions } from "@/lib/loyalty/server";
 import { isUuid } from "@/lib/pets/constants";
 import { createClient } from "@/lib/supabase/server";
 
@@ -85,6 +86,7 @@ export default async function PosHomePage({
   const blockedServiceIds = bill?.appointment_id
     ? await listBilledServiceIds(supabase, bill.appointment_id, bill.id)
     : [];
+  const initialRewards = bill?.client_id ? await listClientRewardOptions(supabase, bill.client_id) : [];
 
   return (
     <>
@@ -105,6 +107,8 @@ export default async function PosHomePage({
         initialWalkInName={bill?.walk_in_name ?? null}
         initialWalkInContact={bill?.walk_in_contact ?? null}
         blockedServiceIds={blockedServiceIds}
+        initialRewards={initialRewards}
+        initialGrantId={bill?.loyalty_grant_id ?? null}
       />
     </>
   );

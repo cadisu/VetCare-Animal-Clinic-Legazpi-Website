@@ -94,6 +94,8 @@ export async function getPosBill(supabase: SupabaseClient, id: string): Promise<
     subtotal: data.subtotal,
     discount_amount: data.discount_amount,
     reward_amount: data.reward_amount,
+    reward_label: data.reward_label ?? null,
+    loyalty_grant_id: data.loyalty_grant_id ?? null,
     total: data.total,
     amount_paid: data.amount_paid,
     amount_tendered: data.amount_tendered ?? null,

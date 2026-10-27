@@ -28,6 +28,8 @@ export type PosBill = {
   subtotal: number | string;
   discount_amount: number | string;
   reward_amount: number | string;
+  reward_label: string | null;
+  loyalty_grant_id: string | null;
   total: number | string;
   amount_paid: number | string | null;
   amount_tendered: number | string | null;

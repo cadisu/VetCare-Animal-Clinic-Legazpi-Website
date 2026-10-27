@@ -1,16 +1,19 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
+import { listClientRewardsAction } from "@/app/actions/loyalty";
+import { ConfirmSubmitButton } from "@/components/ui/ConfirmSubmitButton";
+import { buttonClass } from "@/components/ui/button-styles";
+import { panelClass } from "@/components/ui/panel-styles";
+import { cashChange, formatPeso, lineSubtotal, transactionTotals } from "@/lib/pos/money";
+import { previewReward } from "@/lib/loyalty/card";
+import type { ClientRewardOption } from "@/lib/loyalty/types";
 import {
   loadClientSaleContextAction,
   savePosCartAction,
   searchPosClientsAction,
   voidPosAction,
 } from "@/app/actions/pos";
-import { ConfirmSubmitButton } from "@/components/ui/ConfirmSubmitButton";
-import { buttonClass } from "@/components/ui/button-styles";
-import { panelClass } from "@/components/ui/panel-styles";
-import { cashChange, formatPeso, lineSubtotal, transactionTotals } from "@/lib/pos/money";
 
 export type RegisterItem = {
   itemType: "SERVICE" | "PRODUCT";
@@ -56,6 +59,8 @@ export function PosRegister({
   initialWalkInName,
   initialWalkInContact,
   blockedServiceIds,
+  initialRewards,
+  initialGrantId,
 }: {
   catalog: RegisterItem[];
   initialLines: RegisterLine[];
@@ -67,6 +72,8 @@ export function PosRegister({
   initialWalkInName: string | null;
   initialWalkInContact: string | null;
   blockedServiceIds: string[];
+  initialRewards: ClientRewardOption[];
+  initialGrantId: string | null;
 }) {
   const [error, setError] = useState<string | null>(null);
   const [panel, setPanel] = useState<"catalog" | "cart">("catalog");
@@ -85,6 +92,8 @@ export function PosRegister({
   const [petId, setPetId] = useState<string | null>(initialPetId);
   const [appointmentId, setAppointmentId] = useState<string | null>(initialAppointmentId);
   const [blocked, setBlocked] = useState<string[]>(blockedServiceIds);
+  const [rewards, setRewards] = useState<ClientRewardOption[]>(initialRewards);
+  const [grantId, setGrantId] = useState<string | null>(initialGrantId);
   const [tendered, setTendered] = useState("");
   const [pending, startTransition] = useTransition();
 
@@ -98,7 +107,27 @@ export function PosRegister({
     const haystack = `${item.name} ${item.category}`.toLowerCase();
     return matchesCategory && haystack.includes(query.trim().toLowerCase());
   });
-  const totals = transactionTotals(lines.map((line) => lineSubtotal(line.price, line.quantity)));
+  const selectedReward = rewards.find((reward) => reward.grantId === grantId) ?? null;
+  const rewardHeldElsewhere = Boolean(
+    selectedReward?.heldByTransactionId && selectedReward.heldByTransactionId !== initialTransactionId,
+  );
+  const rewardPreview = mode === "client" && selectedReward && !rewardHeldElsewhere
+    ? previewReward({
+        type: selectedReward.type,
+        discountAmount: selectedReward.discountAmount,
+        serviceId: selectedReward.serviceId,
+        lines: lines.map((line) => ({
+          itemType: line.itemType,
+          serviceId: line.itemType === "SERVICE" ? line.id : null,
+          unitPrice: line.price,
+          quantity: line.quantity,
+        })),
+      })
+    : 0;
+  const totals = transactionTotals(
+    lines.map((line) => lineSubtotal(line.price, line.quantity)),
+    rewardPreview ?? 0,
+  );
   const tenderedAmount = Number(tendered);
   const change = Number.isFinite(tenderedAmount) ? cashChange(totals.total, tenderedAmount) : null;
   const needsClinicalNote = lines.some((line) => line.requiresVeterinarian);
@@ -154,10 +183,15 @@ export function PosRegister({
     setPetId(null);
     setAppointmentId(null);
     setBlocked([]);
+    setGrantId(null);
     startTransition(async () => {
-      const context = await loadClientSaleContextAction(client.id, initialTransactionId);
+      const [context, nextRewards] = await Promise.all([
+        loadClientSaleContextAction(client.id, initialTransactionId),
+        listClientRewardsAction(client.id),
+      ]);
       setPets(context.pets);
       setVisits(context.visits);
+      setRewards(nextRewards);
     });
   }
 
@@ -188,6 +222,7 @@ export function PosRegister({
         items: cartPayload,
         pay,
         amountTendered: pay && Number.isFinite(tenderedAmount) ? tenderedAmount : null,
+        grantId: mode === "client" && !rewardHeldElsewhere ? grantId : null,
       });
       if (result?.error) setError(result.error);
     });
@@ -315,7 +350,10 @@ export function PosRegister({
           <dl className="mt-4 space-y-2 border-t border-line pt-4 text-sm">
             <div className="flex justify-between"><dt className="text-muted">Subtotal</dt><dd>{formatPeso(totals.subtotal)}</dd></div>
             <div className="flex justify-between"><dt className="text-muted">Discount</dt><dd>{formatPeso(0)}</dd></div>
-            <div className="flex justify-between"><dt className="text-muted">Reward</dt><dd>{formatPeso(0)}</dd></div>
+            <div className="flex justify-between">
+              <dt className="text-muted">{selectedReward && !rewardHeldElsewhere ? `Reward · ${selectedReward.name}` : "Reward"}</dt>
+              <dd>{formatPeso(totals.reward)}</dd>
+            </div>
             <div className="flex justify-between text-base font-semibold text-ink">
               <dt>Amount due</dt><dd>{formatPeso(totals.total)}</dd>
             </div>
@@ -338,6 +376,7 @@ export function PosRegister({
                 className={buttonClass(mode === "walk-in" ? "primary" : "outline")}
                 onClick={() => {
                   setMode("walk-in");
+                  setGrantId(null);
                   setWalkInName((current) => (current.trim() ? current : "Walk In"));
                 }}
               >
@@ -396,6 +435,39 @@ export function PosRegister({
                         <option key={visit.id} value={visit.id}>{visit.label}</option>
                       ))}
                     </select>
+                    {rewards.length > 0 && (
+                      <div className="rounded-lg border border-brand/30 bg-brand-soft px-3 py-3">
+                        <p className="text-sm font-semibold text-brand-dark">Reward available</p>
+                        <label htmlFor="reward" className="mt-2 block text-sm font-medium text-ink">Use a reward</label>
+                        <select
+                          id="reward"
+                          value={grantId ?? ""}
+                          onChange={(event) => setGrantId(event.target.value || null)}
+                          className={`${fieldClass} mt-1`}
+                        >
+                          <option value="">No reward</option>
+                          {rewards.map((reward) => {
+                            const held = Boolean(reward.heldByTransactionId && reward.heldByTransactionId !== initialTransactionId);
+                            return (
+                              <option key={reward.grantId} value={reward.grantId} disabled={held}>
+                                {reward.name}
+                                {held ? ` · on open bill ${reward.heldReference ?? ""}` : ""}
+                              </option>
+                            );
+                          })}
+                        </select>
+                        {selectedReward && (
+                          <p className="mt-2 text-sm text-ink">
+                            {selectedReward.type === "FREE_SERVICE"
+                              ? "One unit of the reward service is taken off this bill. Other items stay at their catalog price."
+                              : `${formatPeso(selectedReward.discountAmount ?? 0)} is taken off${selectedReward.serviceId ? " the matching service" : " this bill"}.`}
+                            {selectedReward.expiresAt ? ` Use by ${new Date(selectedReward.expiresAt).toLocaleDateString("en-PH")}.` : ""}
+                            {rewardPreview === null ? " Add the reward service before this can be applied." : ""}
+                            {rewardHeldElsewhere ? " This reward is reserved on another open bill. Remove it there, or void that unpaid bill." : ""}
+                          </p>
+                        )}
+                      </div>
+                    )}
                   </>
                 )}
               </>

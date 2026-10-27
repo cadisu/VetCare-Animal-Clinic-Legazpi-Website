@@ -6,6 +6,8 @@ export type ClientReceiptSummary = {
   status: "COMPLETED" | "VOIDED";
   total: number | string;
   amountPaid: number | string | null;
+  rewardAmount: number | string | null;
+  rewardLabel: string | null;
   occurredAt: string | null;
   petName: string | null;
 };
@@ -28,6 +30,8 @@ type TransactionRow = {
   status: "COMPLETED" | "VOIDED";
   total: number | string;
   amount_paid: number | string | null;
+  reward_amount: number | string | null;
+  reward_label: string | null;
   completed_at: string | null;
   voided_at: string | null;
   pet_id: string | null;
@@ -51,6 +55,8 @@ function toSummary(row: TransactionRow, names: Map<string, string>): ClientRecei
     status: row.status,
     total: row.total,
     amountPaid: row.amount_paid,
+    rewardAmount: row.reward_amount,
+    rewardLabel: row.reward_label,
     occurredAt: occurredAt(row),
     petName: row.pet_id ? names.get(row.pet_id) ?? null : null,
   };
@@ -59,7 +65,7 @@ function toSummary(row: TransactionRow, names: Map<string, string>): ClientRecei
 export async function listClientReceipts(supabase: SupabaseClient): Promise<ClientReceiptSummary[]> {
   const { data } = await supabase
     .from("pos_transactions")
-    .select("id, reference, status, total, amount_paid, completed_at, voided_at, pet_id")
+    .select("id, reference, status, total, amount_paid, reward_amount, reward_label, completed_at, voided_at, pet_id")
     .in("status", ["COMPLETED", "VOIDED"])
     .order("completed_at", { ascending: false });
   const rows = (data ?? []) as TransactionRow[];
@@ -74,7 +80,7 @@ export async function getClientReceipt(supabase: SupabaseClient, transactionId: 
   const [{ data: bill }, { data: items }] = await Promise.all([
     supabase
       .from("pos_transactions")
-      .select("id, reference, status, total, amount_paid, completed_at, voided_at, pet_id")
+      .select("id, reference, status, total, amount_paid, reward_amount, reward_label, completed_at, voided_at, pet_id")
       .eq("id", transactionId)
       .maybeSingle(),
     supabase
