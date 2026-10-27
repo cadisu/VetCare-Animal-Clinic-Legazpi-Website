@@ -1,16 +1,12 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import { setExpiryWarningAction } from "@/app/actions/inventory";
+import { InventoryCatalog } from "@/components/inventory/InventoryCatalog";
 import { InventoryNotice } from "@/components/inventory/InventoryNotice";
 import { InventorySectionLinks } from "@/components/inventory/InventorySectionLinks";
-import { PosSubmitButton } from "@/components/pos/PosSubmitButton";
 import { DashboardHeading } from "@/components/portal/PlaceholderCard";
-import { FormField } from "@/components/ui/FormField";
-import { panelClass } from "@/components/ui/panel-styles";
 import { requireRole } from "@/lib/auth/session";
-import { todayIso } from "@/lib/dates";
-import { getWarningDays, listBatches, stockFacts } from "@/lib/inventory/server";
-import { EXPIRY_LABELS, STOCK_LEVEL_LABELS } from "@/lib/inventory/status";
+import { formatDate, todayIso } from "@/lib/dates";
+import { listBatches, stockFacts } from "@/lib/inventory/server";
+import { getProductImageUrls } from "@/lib/pos/images";
 import { listCatalogProducts } from "@/lib/pos/server";
 import { createClient } from "@/lib/supabase/server";
 
@@ -25,11 +21,14 @@ export default async function InventoryPage({
   const query = await searchParams;
   const supabase = await createClient();
   const today = todayIso();
-  const [products, batches, warningDays] = await Promise.all([
+  const [products, batches] = await Promise.all([
     listCatalogProducts(supabase),
     listBatches(supabase),
-    getWarningDays(supabase),
   ]);
+  const imageUrls = await getProductImageUrls(
+    supabase,
+    products.map((product) => product.image_path),
+  );
   const q = (query.q ?? "").trim().toLowerCase();
   const rows = products
     .map((product) => ({
@@ -48,28 +47,17 @@ export default async function InventoryPage({
       if (query.expiry === "soon" && (!product.is_active || !facts.hasExpiringSoon)) return false;
       if (q && !product.name.toLowerCase().includes(q)) return false;
       return true;
-    });
+    })
+    .sort((a, b) => Number(b.product.is_active) - Number(a.product.is_active));
 
   return (
     <>
       <DashboardHeading
         title="Inventory"
-        subtitle="Receive stock, record losses, and watch batches that are expiring."
+        subtitle="Add products, receive batches, and record stock changes in one place."
       />
       <InventoryNotice notice={query.notice} error={query.error} />
       <InventorySectionLinks current="inventory" />
-      <form action={setExpiryWarningAction} className="mb-6 flex flex-wrap items-end gap-3">
-        <div className="w-full max-w-xs">
-          <FormField
-            label="Expiring soon window"
-            name="days"
-            inputMode="numeric"
-            defaultValue={String(warningDays)}
-            hint="Days before the expiration date. Staff and Senior Vet can change this."
-          />
-        </div>
-        <PosSubmitButton pendingText="Saving...">Save window</PosSubmitButton>
-      </form>
       <form className="mb-4 flex flex-wrap gap-3" action="/staff/inventory">
         <input
           name="q"
@@ -81,48 +69,21 @@ export default async function InventoryPage({
           Search
         </button>
       </form>
-      {rows.length === 0 ? (
-        <section className="rounded-2xl border border-dashed border-line bg-white p-10 text-center text-sm text-muted">
-          No products in this view. Add one from Products.
-        </section>
-      ) : (
-        <section className={panelClass("overflow-x-auto")}>
-          <table className="min-w-full divide-y divide-line text-sm">
-            <thead className="bg-highlight/50 text-left text-xs font-semibold uppercase tracking-wide text-muted">
-              <tr>
-                <th className="px-4 py-3">Product</th>
-                <th className="px-4 py-3">On hand</th>
-                <th className="px-4 py-3">Sellable</th>
-                <th className="px-4 py-3">Stock</th>
-                <th className="px-4 py-3">Expiration</th>
-                <th className="px-4 py-3"> </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-line">
-              {rows.map(({ product, facts }) => (
-                <tr key={product.id}>
-                  <td className="px-4 py-3">
-                    <span className="font-medium text-ink">{product.name}</span>
-                    <span className="mt-0.5 block text-xs text-muted">
-                      {product.category} · {product.unit}
-                      {product.supplier ? ` · ${product.supplier}` : ""}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3">{product.quantity_on_hand}</td>
-                  <td className="px-4 py-3">{facts.sellable}</td>
-                  <td className="px-4 py-3">{STOCK_LEVEL_LABELS[facts.level]}</td>
-                  <td className="px-4 py-3">{facts.expiryStatus ? EXPIRY_LABELS[facts.expiryStatus] : "—"}</td>
-                  <td className="px-4 py-3 text-right">
-                    <Link href={`/staff/inventory/${product.id}`} className="font-semibold text-brand hover:underline">
-                      Batches
-                    </Link>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </section>
-      )}
+      <InventoryCatalog
+        imageUrls={imageUrls}
+        batches={batches.map((batch) => ({
+          id: batch.id,
+          productId: batch.product_id,
+          expirationDate: batch.expiration_date,
+          label: `${batch.id.slice(0, 8)} · ${formatDate(batch.received_at.slice(0, 10))}`,
+        }))}
+        rows={rows.map(({ product, facts }) => ({
+          product,
+          level: facts.level,
+          sellable: facts.sellable,
+          expiryStatus: facts.expiryStatus,
+        }))}
+      />
     </>
   );
 }

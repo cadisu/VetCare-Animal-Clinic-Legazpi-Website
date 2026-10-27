@@ -79,6 +79,8 @@ const POS_ERROR_TEXT: Record<string, string> = {
   "product-unit": "Enter a unit, such as piece or bottle.",
   "product-price": "Enter a valid price.",
   "bad-quantity": "Enter a whole quantity from 1 to 999.",
+  "opening-quantity": "Enter the quantity received for this expiration date.",
+  "expiration-date": "Enter a valid expiration date, or leave it blank.",
   "product-duplicate": "A product with this name already exists.",
   "stock-locked": "Stock on hand changes through a sale, a void, an edit, or a stock adjustment.",
   "no-delete": "Completed bills stay in the history.",

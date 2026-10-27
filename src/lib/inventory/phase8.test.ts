@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import { canAccessPath } from "@/lib/auth/roles";
 import {
   batchExpiryStatus,
+  DEFAULT_EXPIRY_WARNING_DAYS,
   mostUrgentExpiry,
   sellableQuantity,
   stockLevel,
@@ -14,6 +15,17 @@ const migration = readFileSync(
   path.join(process.cwd(), "supabase/migrations/20261026000000_phase8_inventory.sql"),
   "utf8",
 );
+const receipts = readFileSync(
+  path.join(process.cwd(), "supabase/migrations/20261027000000_phase8_inventory_receipts.sql"),
+  "utf8",
+);
+const expirationEdit = readFileSync(
+  path.join(process.cwd(), "supabase/migrations/20261027120000_phase8_batch_expiration_edit.sql"),
+  "utf8",
+);
+const staffNav = readFileSync(path.join(process.cwd(), "src/components/staff/nav.ts"), "utf8");
+const seniorNav = readFileSync(path.join(process.cwd(), "src/components/senior-vet/nav.ts"), "utf8");
+const productsPage = readFileSync(path.join(process.cwd(), "src/app/staff/products/page.tsx"), "utf8");
 
 describe("phase 8 inventory rules", () => {
   it("keeps POS sales on POS_SALE and adds the operational movement types", () => {
@@ -91,5 +103,30 @@ describe("phase 8 inventory rules", () => {
     expect(canAccessPath("CLIENT", "/staff/inventory/history")).toBe(false);
     expect(canAccessPath("STAFF", "/staff/inventory")).toBe(true);
     expect(canAccessPath("SENIOR_VET", "/staff/inventory/history")).toBe(true);
+  });
+
+  it("keeps one Inventory section and redirects the old products page", () => {
+    expect(staffNav.match(/label: "Inventory"/g)).toHaveLength(1);
+    expect(seniorNav.match(/label: "Inventory"/g)).toHaveLength(1);
+    expect(staffNav).not.toContain('label: "Products"');
+    expect(seniorNav).not.toContain('label: "Products"');
+    expect(productsPage).toContain('redirect(suffix ? `/staff/inventory?${suffix}` : "/staff/inventory")');
+  });
+
+  it("uses a 90-day warning fallback and leaves a saved warning value alone", () => {
+    expect(DEFAULT_EXPIRY_WARNING_DAYS).toBe(90);
+    expect(batchExpiryStatus(null, "2026-10-26", DEFAULT_EXPIRY_WARNING_DAYS)).toBe("NORMAL");
+    expect(receipts).toContain("alter column expiry_warning_days set default 90");
+    expect(receipts).toContain("and expiry_warning_days = 30");
+    expect(receipts).toContain("and updated_by is null");
+    expect(receipts).toContain("new.quantity_received is distinct from old.quantity_received");
+    expect(receipts).toContain("Stock history cannot be modified");
+  });
+
+  it("lets only the expiration function change a batch date", () => {
+    expect(expirationEdit).toContain("set_batch_expiration(p_batch_id uuid, p_expiration date)");
+    expect(expirationEdit).toContain("set expiration_date = p_expiration");
+    expect(expirationEdit).toContain("current_setting('app.batch_expiration', true) is distinct from 'on'");
+    expect(expirationEdit).toContain("perform public.pos_assert_staff()");
   });
 });

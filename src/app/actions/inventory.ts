@@ -6,7 +6,7 @@ import { z } from "zod";
 import { requireRole } from "@/lib/auth/session";
 import { inventoryErrorCode } from "@/lib/inventory/notices";
 import { createClient } from "@/lib/supabase/server";
-import { inventoryMovementSchema, warningDaysSchema } from "@/lib/validation/inventory";
+import { inventoryMovementSchema } from "@/lib/validation/inventory";
 
 function withCode(path: string, key: "error" | "notice", code: string): string {
   const [base, query = ""] = path.split("?");
@@ -86,13 +86,54 @@ export async function recordInventoryMovementAction(formData: FormData): Promise
   redirect(withCode(back, "notice", "recorded"));
 }
 
-export async function setExpiryWarningAction(formData: FormData): Promise<void> {
+export type StockInFormState = { saved: boolean; error: string | null };
+
+export async function saveStockInForm(
+  _previous: StockInFormState,
+  formData: FormData,
+): Promise<StockInFormState> {
   await requireRole(["STAFF", "SENIOR_VET"]);
-  const parsed = warningDaysSchema.safeParse({ days: String(formData.get("days") ?? "") });
-  if (!parsed.success) redirect(withCode("/staff/inventory", "error", "warning-days"));
+  const parsed = inventoryMovementSchema.safeParse({
+    productId: String(formData.get("productId") ?? ""),
+    movementType: "STOCK_IN",
+    direction: "IN",
+    quantity: String(formData.get("quantity") ?? ""),
+    batchId: "",
+    supplier: String(formData.get("supplier") ?? ""),
+    referenceNote: String(formData.get("referenceNote") ?? ""),
+    unitCost: String(formData.get("unitCost") ?? ""),
+    expirationDate: String(formData.get("expirationDate") ?? ""),
+    reason: String(formData.get("reason") ?? ""),
+  });
+  if (!parsed.success) {
+    const fields = z.flattenError(parsed.error).fieldErrors;
+    const code = fields.reason
+      ? "movement-reason"
+      : fields.expirationDate
+        ? "expiration-date"
+        : fields.unitCost
+          ? "unit-cost"
+          : fields.supplier
+            ? "supplier"
+            : fields.referenceNote
+              ? "reference"
+              : "bad-quantity";
+    return { saved: false, error: code };
+  }
   const supabase = await createClient();
-  const { error } = await supabase.rpc("set_expiry_warning_days", { p_days: parsed.data.days });
-  if (error) fail("/staff/inventory", error);
+  const { error } = await supabase.rpc("record_inventory_movement", {
+    p_product_id: parsed.data.productId,
+    p_movement_type: "STOCK_IN",
+    p_quantity: parsed.data.quantity,
+    p_reason: parsed.data.reason,
+    p_batch_id: null,
+    p_supplier: parsed.data.supplier || null,
+    p_reference_note: parsed.data.referenceNote || null,
+    p_unit_cost: parsed.data.unitCost,
+    p_expiration_date: parsed.data.expirationDate,
+    p_direction: "IN",
+  });
+  if (error) return { saved: false, error: inventoryErrorCode(error.message ?? "") };
   refreshInventory();
-  redirect(withCode("/staff/inventory", "notice", "warning"));
+  return { saved: true, error: null };
 }

@@ -1,5 +1,12 @@
 import { addDaysIso } from "@/lib/dates";
 
+/**
+ * Days before a batch expiration date when the batch is flagged as expiring soon.
+ * This is the expiry warning period, not an expiration date. Used only when the
+ * clinic has not saved a value in clinic_settings.
+ */
+export const DEFAULT_EXPIRY_WARNING_DAYS = 90;
+
 export const STOCK_LEVELS = ["OUT", "LOW", "OK"] as const;
 export type StockLevel = (typeof STOCK_LEVELS)[number];
 

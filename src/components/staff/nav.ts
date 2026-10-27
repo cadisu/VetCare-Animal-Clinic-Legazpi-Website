@@ -1,4 +1,4 @@
-import { CalendarIcon, ClockIcon, DashboardIcon, FolderIcon, InventoryIcon, PhoneIcon, PosIcon, ProductIcon, UsersIcon } from "@/components/ui/icons";
+import { CalendarIcon, ClockIcon, DashboardIcon, FolderIcon, InventoryIcon, PhoneIcon, PosIcon, UsersIcon } from "@/components/ui/icons";
 import type { DashboardNavItem } from "@/components/dashboard/types";
 
 export const STAFF_NAV: readonly DashboardNavItem[] = [
@@ -17,7 +17,6 @@ export const STAFF_NAV: readonly DashboardNavItem[] = [
   },
   { href: "/staff/schedule", label: "Clinic schedule", icon: ClockIcon },
   { href: "/staff/pos", label: "POS", icon: PosIcon },
-  { href: "/staff/products", label: "Products", icon: ProductIcon },
   { href: "/staff/inventory", label: "Inventory", icon: InventoryIcon, alsoActive: ["/staff/inventory/history"] },
   { href: "/staff/services", label: "Services", icon: FolderIcon },
   { href: "/staff/sms-templates", label: "SMS templates", icon: PhoneIcon },

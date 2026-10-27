@@ -61,7 +61,13 @@ export function InventoryMovementForm({
       )}
       {stockIn && (
         <>
-          <FormField label="Expiration date" name="expirationDate" type="date" labelNote="(optional)" />
+          <FormField
+            label="Expiration date"
+            name="expirationDate"
+            type="date"
+            labelNote="(optional)"
+            hint="Leave this blank when the receipt has no expiration date. The warning period does not fill it in."
+          />
           <FormField label="Supplier" name="supplier" labelNote="(optional)" maxLength={120} />
           <FormField label="Reference" name="referenceNote" labelNote="(optional)" maxLength={80} placeholder="Delivery note or invoice" />
           <FormField label="Unit cost" name="unitCost" labelNote="(optional)" inputMode="decimal" />

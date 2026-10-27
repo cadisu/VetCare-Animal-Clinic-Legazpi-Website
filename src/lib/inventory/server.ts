@@ -3,6 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { todayIso } from "@/lib/dates";
 import {
   batchExpiryStatus,
+  DEFAULT_EXPIRY_WARNING_DAYS,
   isMovementType,
   mostUrgentExpiry,
   sellableQuantity,
@@ -15,6 +16,7 @@ export type InventoryBatch = {
   id: string;
   product_id: string;
   quantity_remaining: number;
+  quantity_received: number;
   expiration_date: string | null;
   supplier: string | null;
   unit_cost: number | string | null;
@@ -50,6 +52,7 @@ type BatchRecord = {
   id: string;
   product_id: string;
   quantity_remaining: number;
+  quantity_received: number;
   expiration_date: string | null;
   supplier: string | null;
   unit_cost: number | string | null;
@@ -63,7 +66,7 @@ function cleanSearch(value: string): string {
 export async function getWarningDays(supabase: SupabaseClient): Promise<number> {
   const { data } = await supabase.from("clinic_settings").select("expiry_warning_days").eq("id", 1).maybeSingle();
   const days = data?.expiry_warning_days;
-  return typeof days === "number" && days >= 1 && days <= 365 ? days : 30;
+  return typeof days === "number" && days >= 1 && days <= 365 ? days : DEFAULT_EXPIRY_WARNING_DAYS;
 }
 
 export async function listBatches(supabase: SupabaseClient, productId?: string): Promise<InventoryBatch[]> {
@@ -71,7 +74,7 @@ export async function listBatches(supabase: SupabaseClient, productId?: string):
   const warningDays = await getWarningDays(supabase);
   let request = supabase
     .from("product_batches")
-    .select("id, product_id, quantity_remaining, expiration_date, supplier, unit_cost, received_at")
+    .select("id, product_id, quantity_remaining, quantity_received, expiration_date, supplier, unit_cost, received_at")
     .order("received_at", { ascending: true });
   if (productId) request = request.eq("product_id", productId);
   const { data } = await request;
@@ -117,7 +120,7 @@ export async function listInventoryAlerts(supabase: SupabaseClient): Promise<Inv
     getWarningDays(supabase),
     supabase
       .from("product_batches")
-      .select("id, product_id, quantity_remaining, expiration_date, supplier, unit_cost, received_at"),
+      .select("id, product_id, quantity_remaining, quantity_received, expiration_date, supplier, unit_cost, received_at"),
     supabase.from("products").select("id, name, quantity_on_hand, minimum_stock, is_active"),
   ]);
   const batches = ((batchesResult.data ?? []) as BatchRecord[]).map((batch) => ({

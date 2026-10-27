@@ -10,9 +10,6 @@ export function InventorySectionLinks({ current }: { current: "inventory" | "his
       <Link href="/staff/inventory/history" className={buttonClass(current === "history" ? "primary" : "outline")}>
         Movement history
       </Link>
-      <Link href="/staff/products" className={buttonClass("outline")}>
-        Products
-      </Link>
     </div>
   );
 }

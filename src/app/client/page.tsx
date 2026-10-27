@@ -8,7 +8,10 @@ import { buttonClass } from "@/components/ui/button-styles";
 import { panelPaddingClass } from "@/components/ui/panel-styles";
 import { listAppointmentsForClient, splitClientAppointments } from "@/lib/appointments/server";
 import { requireRole } from "@/lib/auth/session";
+import { formatDate } from "@/lib/dates";
 import { speciesLabel, PET_COLUMNS, type Pet } from "@/lib/pets/constants";
+import { formatPeso } from "@/lib/pos/money";
+import { listClientReceipts } from "@/lib/pos/receipts";
 import { getPetImageUrls } from "@/lib/pets/server";
 import { createClient } from "@/lib/supabase/server";
 
@@ -30,6 +33,7 @@ export default async function ClientDashboardPage() {
   const { upcomingPreview } = splitClientAppointments(
     await listAppointmentsForClient(supabase, profile.id),
   );
+  const recentReceipts = (await listClientReceipts(supabase)).slice(0, 3);
 
   return (
     <>
@@ -99,10 +103,34 @@ export default async function ClientDashboardPage() {
           title="Loyalty"
           description="Your digital stamp card and available rewards will appear here."
         />
-        <PlaceholderCard
-          title="Recent Activity"
-          description="Your recent appointments and services will appear here."
-        />
+        <section className={panelPaddingClass()}>
+          <div className="flex items-start justify-between gap-3">
+            <h2 className="text-base font-semibold text-ink">Recent receipts</h2>
+            <Link href="/client/receipts" className="text-sm font-semibold text-brand hover:underline">
+              View all
+            </Link>
+          </div>
+          {recentReceipts.length === 0 ? (
+            <p className="mt-3 text-sm text-muted">No receipts yet.</p>
+          ) : (
+            <ul className="mt-4 space-y-3">
+              {recentReceipts.map((receipt) => (
+                <li key={receipt.id}>
+                  <Link href={`/client/receipts/${receipt.id}`} className="block rounded-lg p-1 hover:bg-highlight/80">
+                    <span className="flex items-baseline justify-between gap-3">
+                      <span className="text-sm font-semibold text-ink">{receipt.reference}</span>
+                      <span className="text-sm text-ink">{formatPeso(receipt.total)}</span>
+                    </span>
+                    <span className="mt-0.5 block text-xs text-muted">
+                      {formatDate(receipt.occurredAt)}
+                      {receipt.status === "VOIDED" ? " · Voided" : ""}
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
       </div>
     </>
   );
