@@ -42,8 +42,8 @@ export type InventoryMovement = {
 
 export type InventoryAlerts = {
   warningDays: number;
-  out: { id: string; name: string }[];
-  low: { id: string; name: string }[];
+  out: { id: string; name: string; quantityOnHand: number; minimumStock: number | null }[];
+  low: { id: string; name: string; quantityOnHand: number; minimumStock: number | null }[];
   expiringSoon: { productId: string; productName: string; expirationDate: string; quantity: number }[];
   expired: { productId: string; productName: string; expirationDate: string; quantity: number }[];
 };
@@ -158,10 +158,20 @@ export async function listInventoryAlerts(supabase: SupabaseClient): Promise<Inv
     warningDays,
     out: active
       .filter((product) => stockLevel(product.quantity_on_hand, product.minimum_stock) === "OUT")
-      .map((product) => ({ id: product.id, name: product.name })),
+      .map((product) => ({
+        id: product.id,
+        name: product.name,
+        quantityOnHand: product.quantity_on_hand,
+        minimumStock: product.minimum_stock,
+      })),
     low: active
       .filter((product) => stockLevel(product.quantity_on_hand, product.minimum_stock) === "LOW")
-      .map((product) => ({ id: product.id, name: product.name })),
+      .map((product) => ({
+        id: product.id,
+        name: product.name,
+        quantityOnHand: product.quantity_on_hand,
+        minimumStock: product.minimum_stock,
+      })),
     expiringSoon,
     expired,
   };

@@ -99,6 +99,13 @@ export const UserIcon = (props: IconProps) => (
   </svg>
 );
 
+export const ChartIcon = (props: IconProps) => (
+  <svg {...base(props)}>
+    <path d="M4 19h16" />
+    <path d="M7 16v-4M12 16V8M17 16v-7" />
+  </svg>
+);
+
 export const DashboardIcon = (props: IconProps) => (
   <svg {...base(props)}>
     <rect x="3" y="3" width="7" height="9" rx="1.5" />

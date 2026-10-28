@@ -1,5 +1,6 @@
 import {
   CalendarIcon,
+  ChartIcon,
   ClockIcon,
   DashboardIcon,
   FolderIcon,
@@ -20,6 +21,7 @@ export type SeniorVetNavItem = DashboardNavItem;
 
 export const SENIOR_VET_NAV: readonly DashboardNavItem[] = [
   { href: "/senior-vet", label: "Dashboard", exact: true, icon: DashboardIcon },
+  { href: "/staff/analytics", label: "Analytics", icon: ChartIcon },
   {
     href: "/senior-vet/appointments",
     label: "Appointments",

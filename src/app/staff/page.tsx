@@ -3,7 +3,7 @@ import Link from "next/link";
 import { AppointmentCard } from "@/components/appointments/AppointmentCard";
 import { AppointmentStatusNotice } from "@/components/appointments/AppointmentStatusNotice";
 import { FlashNotice } from "@/components/appointments/FlashNotice";
-import { DashboardHeading, PlaceholderCard } from "@/components/portal/PlaceholderCard";
+import { DashboardHeading } from "@/components/portal/PlaceholderCard";
 import { InventoryAlertCard } from "@/components/inventory/InventoryAlertCard";
 import { buttonClass } from "@/components/ui/button-styles";
 import { panelClass, panelPaddingClass } from "@/components/ui/panel-styles";
@@ -148,10 +148,16 @@ export default async function StaffDashboardPage({
           <p className="mt-4 text-sm font-semibold text-brand">Open POS →</p>
         </Link>
         <InventoryAlertCard alerts={alerts} />
-        <PlaceholderCard
-          title="Analytics"
-          description="Operational analytics will appear here."
-        />
+        <Link
+          href="/staff/analytics"
+          className={panelClass("p-6 transition-colors hover:border-brand/40 hover:bg-highlight/80")}
+        >
+          <h2 className="text-base font-semibold text-ink">Analytics</h2>
+          <p className="mt-3 text-sm text-muted">
+            Customers, appointments, sales, services, loyalty, and current inventory alerts.
+          </p>
+          <p className="mt-4 text-sm font-semibold text-brand">Open analytics →</p>
+        </Link>
         </div>
       </div>
     </>

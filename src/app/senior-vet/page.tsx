@@ -146,9 +146,17 @@ export default async function SeniorVetDashboardPage() {
             title="Clinic Overview"
             description="A summary of clinic activity will appear here."
           />
-          <PlaceholderCard title="Revenue" description="Sales and revenue summaries will appear here." />
+          <Link href="/staff/analytics" className={panelPaddingClass("block transition-colors hover:border-brand/40 hover:bg-highlight/80")}>
+            <h2 className="text-base font-semibold text-ink">Revenue</h2>
+            <p className="mt-3 text-sm text-muted">Gross sales, rewards applied, and recorded sales for the clinic.</p>
+            <p className="mt-4 text-sm font-semibold text-brand">Open analytics →</p>
+          </Link>
           <InventoryAlertCard alerts={alerts} />
-          <PlaceholderCard title="Analytics" description="Complete clinic analytics will appear here." />
+          <Link href="/staff/analytics" className={panelPaddingClass("block transition-colors hover:border-brand/40 hover:bg-highlight/80")}>
+            <h2 className="text-base font-semibold text-ink">Analytics</h2>
+            <p className="mt-3 text-sm text-muted">Appointments, services, loyalty, and current inventory alerts.</p>
+            <p className="mt-4 text-sm font-semibold text-brand">Open analytics →</p>
+          </Link>
           <PlaceholderCard title="User Management" description="Manage client and staff accounts here." />
           <section className={panelPaddingClass()}>
             <h2 className="text-base font-semibold text-ink">Clinical Records</h2>
