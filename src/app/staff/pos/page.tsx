@@ -79,7 +79,7 @@ export default async function PosHomePage({
         imageUrl: match?.imageUrl ?? null,
         requiresVeterinarian: match?.requiresVeterinarian ?? false,
         quantity: item.quantity,
-        petId: item.pet_id,
+        petId: item.pet_id ?? (item.item_type === "SERVICE" ? bill?.pet_id ?? null : null),
       },
     ];
   });

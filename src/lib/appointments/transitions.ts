@@ -108,6 +108,7 @@ export const APPOINTMENT_STATUS_NOTICES: Record<string, string> = {
   checked_in: "Client checked in.",
   consultation_started: "Consultation started.",
   completed: "Appointment marked as completed.",
+  already_billed: "This visit is already billed.",
   cancelled: "Appointment cancelled. This cannot be reversed through the normal workflow.",
   no_show: "Appointment marked as a no-show.",
 };
@@ -117,6 +118,7 @@ export const APPOINTMENT_STATUS_ERRORS: Record<string, string> = {
   invalid: "This status change is not allowed. Refresh the page and try again.",
   not_found: "Appointment not found.",
   generic: "Something went wrong. Please try again.",
+  missing_price: "Set a price for this service before adding it.",
 };
 
 const NOTICE_CODE_BY_STATUS: Partial<Record<AppointmentStatus, string>> = {

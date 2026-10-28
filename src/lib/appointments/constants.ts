@@ -14,12 +14,19 @@ export const APPOINTMENT_STATUSES = [
 ] as const;
 export type AppointmentStatus = (typeof APPOINTMENT_STATUSES)[number];
 
-export const SLOT_STATES = ["AVAILABLE", "FULL", "BLOCKED", "UNAVAILABLE", "ALREADY_BOOKED"] as const;
+export const SLOT_STATES = ["AVAILABLE", "FULL", "BLOCKED", "UNAVAILABLE", "ALREADY_BOOKED", "EARLIER_TODAY"] as const;
 export type SlotState = (typeof SLOT_STATES)[number];
 
 export function slotStateLabel(state: SlotState | string): string {
   if (state === "ALREADY_BOOKED") return "Already booked";
+  if (state === "EARLIER_TODAY") return "Earlier today";
   return state;
+}
+
+/** Walk-ins can use an earlier open slot from today. On-behalf bookings stay on later times. */
+export function isStaffBookableSlot(state: string, source: AppointmentSource): boolean {
+  if (state === "AVAILABLE") return true;
+  return source === "WALK_IN" && state === "EARLIER_TODAY";
 }
 
 export const STATUS_LABELS: Record<AppointmentStatus, string> = {
@@ -140,6 +147,36 @@ export function compareAppointmentsForDay(a: AppointmentListRow, b: AppointmentL
   const aFinished = TERMINAL_STATUSES.includes(a.status) ? 1 : 0;
   const bFinished = TERMINAL_STATUSES.includes(b.status) ? 1 : 0;
   if (aFinished !== bFinished) return aFinished - bFinished;
+  return compareAppointmentsBySlotTime(a, b);
+}
+
+const RECORDABLE_FOR_SCHEDULE = new Set<AppointmentStatus>(["CHECKED_IN", "IN_CONSULTATION", "COMPLETED"]);
+
+/** Senior Vet day list: waiting for a record, already recorded, or cancelled / no-show. */
+export type ScheduleRecordMark = "pending" | "recorded" | "closed";
+
+export function scheduleRecordMark(status: AppointmentStatus, hasRecord: boolean): ScheduleRecordMark | null {
+  if (status === "CANCELLED" || status === "NO_SHOW") return "closed";
+  if (hasRecord) return "recorded";
+  if (RECORDABLE_FOR_SCHEDULE.has(status)) return "pending";
+  return null;
+}
+
+function scheduleRecordRank(status: AppointmentStatus, hasRecord: boolean): number {
+  const mark = scheduleRecordMark(status, hasRecord);
+  if (mark === "pending") return 0;
+  if (mark === "closed") return 2;
+  return 1;
+}
+
+/** Pending records first, cancelled and no-shows last, then by appointment time. */
+export function compareSeniorVetSchedule(
+  a: AppointmentListRow,
+  b: AppointmentListRow,
+  recordedIds: ReadonlySet<string>,
+): number {
+  const rank = scheduleRecordRank(a.status, recordedIds.has(a.id)) - scheduleRecordRank(b.status, recordedIds.has(b.id));
+  if (rank !== 0) return rank;
   return compareAppointmentsBySlotTime(a, b);
 }
 

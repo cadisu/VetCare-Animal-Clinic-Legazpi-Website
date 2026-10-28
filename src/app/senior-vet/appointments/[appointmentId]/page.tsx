@@ -8,7 +8,7 @@ export default async function SeniorVetAppointmentDetailPage({
   searchParams,
 }: {
   params: Promise<{ appointmentId: string }>;
-  searchParams: Promise<{ flash?: string; flashError?: string; message?: string; entry?: string }>;
+  searchParams: Promise<{ flash?: string; flashError?: string; message?: string; entry?: string; notice?: string; statusError?: string }>;
 }) {
   const { appointmentId } = await params;
   const query = await searchParams;
@@ -19,6 +19,8 @@ export default async function SeniorVetAppointmentDetailPage({
       flashError={query.flashError}
       message={query.message}
       entry={query.entry}
+      notice={query.notice}
+      statusError={query.statusError}
       homePath="/senior-vet/appointments"
     />
   );

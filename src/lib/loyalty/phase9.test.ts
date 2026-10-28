@@ -122,9 +122,9 @@ describe("phase 9 cycles, holds, and grant snapshots", () => {
     expect(migration).toContain("grant select on public.loyalty_grants to authenticated");
     expect(migration).not.toContain("grant insert on public.loyalty_grants");
     expect(migration).not.toContain("grant update on public.loyalty_grants");
-    expect(loyaltyActions).toContain('requireRole(["SENIOR_VET"])');
+    expect(loyaltyActions).toContain('requireRole(["STAFF", "SENIOR_VET"])');
     expect(loyaltyActions).not.toContain('requireRole(["CLIENT"])');
-    expect(loyaltyActions).not.toContain('requireRole(["STAFF"])');
+    expect(loyaltyActions).not.toContain('requireRole(["SENIOR_VET"])');
   });
 });
 
@@ -169,14 +169,16 @@ describe("phase 9 card display and access", () => {
     })).toBe(200);
   });
 
-  it("lets a client open their card and keeps staff out of program settings", () => {
+  it("lets a client open their card and lets staff manage the program", () => {
     expect(clientLayout).toContain('href: "/client/loyalty"');
-    expect(seniorNav).toContain('href: "/senior-vet/loyalty"');
+    expect(seniorNav).toContain('href: "/staff/loyalty"');
+    expect(staffNav).toContain('href: "/staff/loyalty"');
     expect(staffNav).not.toContain("/senior-vet/loyalty");
     expect(canAccessPath("CLIENT", "/client/loyalty")).toBe(true);
+    expect(canAccessPath("CLIENT", "/staff/loyalty")).toBe(false);
     expect(canAccessPath("CLIENT", "/senior-vet/loyalty")).toBe(false);
     expect(canAccessPath("STAFF", "/senior-vet/loyalty")).toBe(false);
-    expect(canAccessPath("STAFF", "/staff/pos")).toBe(true);
-    expect(canAccessPath("SENIOR_VET", "/senior-vet/loyalty")).toBe(true);
+    expect(canAccessPath("STAFF", "/staff/loyalty")).toBe(true);
+    expect(canAccessPath("SENIOR_VET", "/staff/loyalty")).toBe(true);
   });
 });

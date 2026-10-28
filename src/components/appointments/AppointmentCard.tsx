@@ -11,7 +11,14 @@ import {
   formatTime12,
   SOURCE_LABELS,
   type AppointmentListRow,
+  type ScheduleRecordMark,
 } from "@/lib/appointments/constants";
+
+const RECORD_BORDER: Record<ScheduleRecordMark, string> = {
+  pending: "border-2 !border-yellow-400",
+  recorded: "border-2 !border-green-600",
+  closed: "border-2 !border-red-600",
+};
 
 function canSendReminder(appointment: AppointmentListRow): boolean {
   return (
@@ -30,6 +37,7 @@ export function AppointmentCard({
   actorRole,
   returnTo,
   detailsHref,
+  recordMark,
 }: {
   appointment: AppointmentListRow & { client?: { full_name: string } };
   href: string;
@@ -40,6 +48,7 @@ export function AppointmentCard({
   actorRole?: "STAFF" | "SENIOR_VET";
   returnTo?: string;
   detailsHref?: string;
+  recordMark?: ScheduleRecordMark | null;
 }) {
   const { slot } = appointment;
   const summary = (
@@ -62,7 +71,7 @@ export function AppointmentCard({
   );
 
   return (
-    <div className={panelClass("p-5")}>
+    <div className={panelClass(`p-5${recordMark ? ` ${RECORD_BORDER[recordMark]}` : ""}`)}>
       {showStaffActions ? (
         summary
       ) : (

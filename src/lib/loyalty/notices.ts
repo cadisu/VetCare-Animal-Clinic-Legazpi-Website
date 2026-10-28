@@ -1,5 +1,6 @@
 const LOYALTY_ERROR_PHRASES: Record<string, string> = {
   "Only Senior Vets can change the loyalty program": "senior-only",
+  "Only clinic staff can change the loyalty program": "senior-only",
   "Stamp limit is below an active milestone": "stamp-limit",
   "Enter a program name": "program-name",
   "Enter a reward name": "reward-name",
@@ -15,7 +16,7 @@ const LOYALTY_ERROR_PHRASES: Record<string, string> = {
 };
 
 const LOYALTY_ERROR_TEXT: Record<string, string> = {
-  "senior-only": "Only a Senior Vet can change the loyalty program.",
+  "senior-only": "Only Staff and Senior Vet can change the loyalty program.",
   "stamp-limit": "The stamp limit has to be at least as high as each active milestone, from 1 to 36.",
   "program-name": "Enter a program name.",
   "reward-name": "Enter a reward name.",

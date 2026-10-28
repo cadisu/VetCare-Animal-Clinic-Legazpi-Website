@@ -9,8 +9,10 @@ import type { ClientRewardOption } from "@/lib/loyalty/types";
 import { isUuid } from "@/lib/pets/constants";
 import { createClient } from "@/lib/supabase/server";
 
+const LOYALTY_PATH = "/staff/loyalty";
+
 function fail(code: string): never {
-  redirect(`/senior-vet/loyalty?error=${code}`);
+  redirect(`${LOYALTY_PATH}?error=${code}`);
 }
 
 function readIds(formData: FormData, name: string): string[] {
@@ -21,7 +23,7 @@ function readIds(formData: FormData, name: string): string[] {
 }
 
 export async function saveLoyaltyProgramAction(formData: FormData): Promise<void> {
-  await requireRole(["SENIOR_VET"]);
+  await requireRole(["STAFF", "SENIOR_VET"]);
   const stampLimit = Number(String(formData.get("stampLimit") ?? ""));
   const validityPolicy = String(formData.get("cyclePolicy") ?? "");
   const supabase = await createClient();
@@ -34,13 +36,14 @@ export async function saveLoyaltyProgramAction(formData: FormData): Promise<void
     p_service_ids: readIds(formData, "serviceId"),
   });
   if (error) fail(loyaltyErrorCode(error.message));
+  revalidatePath(LOYALTY_PATH);
   revalidatePath("/senior-vet/loyalty");
   revalidatePath("/client/loyalty");
-  redirect("/senior-vet/loyalty?notice=saved");
+  redirect(`${LOYALTY_PATH}?notice=saved`);
 }
 
 export async function saveLoyaltyRewardAction(formData: FormData): Promise<void> {
-  await requireRole(["SENIOR_VET"]);
+  await requireRole(["STAFF", "SENIOR_VET"]);
   const rewardId = String(formData.get("rewardId") ?? "").trim();
   const milestone = Number(String(formData.get("milestone") ?? ""));
   const discount = String(formData.get("discount") ?? "").trim();
@@ -60,13 +63,14 @@ export async function saveLoyaltyRewardAction(formData: FormData): Promise<void>
     p_validity_days: validity === "" ? null : Number(validity),
   });
   if (error) fail(loyaltyErrorCode(error.message));
+  revalidatePath(LOYALTY_PATH);
   revalidatePath("/senior-vet/loyalty");
   revalidatePath("/client/loyalty");
-  redirect("/senior-vet/loyalty?notice=reward-saved");
+  redirect(`${LOYALTY_PATH}?notice=reward-saved`);
 }
 
 export async function setLoyaltyRewardActiveAction(formData: FormData): Promise<void> {
-  await requireRole(["SENIOR_VET"]);
+  await requireRole(["STAFF", "SENIOR_VET"]);
   const rewardId = String(formData.get("rewardId") ?? "");
   const active = String(formData.get("isActive") ?? "false") === "true";
   if (!isUuid(rewardId)) fail("generic");
@@ -76,9 +80,10 @@ export async function setLoyaltyRewardActiveAction(formData: FormData): Promise<
     p_is_active: active,
   });
   if (error) fail(loyaltyErrorCode(error.message));
+  revalidatePath(LOYALTY_PATH);
   revalidatePath("/senior-vet/loyalty");
   revalidatePath("/client/loyalty");
-  redirect(`/senior-vet/loyalty?notice=${active ? "reward-on" : "reward-off"}`);
+  redirect(`${LOYALTY_PATH}?notice=${active ? "reward-on" : "reward-off"}`);
 }
 
 export async function listClientRewardsAction(clientId: string): Promise<ClientRewardOption[]> {

@@ -6,6 +6,7 @@ import { sendAppointmentReminderNowAction } from "@/app/actions/sms";
 import type { AppointmentSmsRow } from "@/components/appointments/AppointmentSmsList";
 import { AppointmentStatusActions } from "@/components/appointments/AppointmentStatusActions";
 import { AppointmentStatusBadge } from "@/components/appointments/AppointmentStatusBadge";
+import { AppointmentStatusNotice } from "@/components/appointments/AppointmentStatusNotice";
 import { FlashNotice } from "@/components/appointments/FlashNotice";
 import { RescheduleSlotForm } from "@/components/appointments/RescheduleSlotForm";
 import { buttonClass } from "@/components/ui/button-styles";
@@ -49,6 +50,8 @@ export async function AppointmentDetail({
   flashError,
   message,
   entry,
+  notice,
+  statusError,
   homePath,
 }: {
   appointmentId: string;
@@ -56,6 +59,8 @@ export async function AppointmentDetail({
   flashError?: string;
   message?: string;
   entry?: string;
+  notice?: string;
+  statusError?: string;
   homePath: "/staff/appointments" | "/senior-vet/appointments";
 }) {
   const profile = await requireRole(["STAFF", "SENIOR_VET"]);
@@ -109,6 +114,7 @@ export async function AppointmentDetail({
 
   return (
     <>
+      <AppointmentStatusNotice notice={notice} statusError={statusError} />
       <FlashNotice flash={flash} flashError={flashError} />
       <section className={panelClass("p-6")}>
         <div className="flex flex-wrap items-start justify-between gap-3">

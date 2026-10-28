@@ -1,13 +1,16 @@
 import type { Metadata } from "next";
 import { AppointmentCard } from "@/components/appointments/AppointmentCard";
 import { AppointmentStatusNotice } from "@/components/appointments/AppointmentStatusNotice";
+import { Alert } from "@/components/ui/Alert";
 import { buttonClass } from "@/components/ui/button-styles";
 import { FormField } from "@/components/ui/FormField";
+import { compareSeniorVetSchedule, scheduleRecordMark } from "@/lib/appointments/constants";
 import {
   filterAppointmentsForVeterinarian,
   getVeterinarianIdForProfile,
   listAppointmentsForDay,
 } from "@/lib/appointments/server";
+import { CLINICAL_NOTICES } from "@/lib/clinical/constants";
 import { requireRole } from "@/lib/auth/session";
 import { todayIso } from "@/lib/dates";
 import { createClient } from "@/lib/supabase/server";
@@ -24,6 +27,7 @@ export default async function SeniorVetTodayAppointmentsPage({
     notice?: string;
     statusError?: string;
     completed?: string;
+    message?: string;
   }>;
 }) {
   const profile = await requireRole(["SENIOR_VET"]);
@@ -31,13 +35,19 @@ export default async function SeniorVetTodayAppointmentsPage({
   const day = params.day && /^\d{4}-\d{2}-\d{2}$/.test(params.day) ? params.day : todayIso();
   const supabase = await createClient();
   const veterinarianId = await getVeterinarianIdForProfile(supabase, profile.id);
-  const appointments = filterAppointmentsForVeterinarian(
+  const dayAppointments = filterAppointmentsForVeterinarian(
     await listAppointmentsForDay(supabase, day, {
       q: params.q,
       source: params.source,
     }),
     veterinarianId,
   );
+  const recordedIds = await recordedAppointmentIds(
+    supabase,
+    dayAppointments.map((appointment) => appointment.id),
+  );
+  const appointments = [...dayAppointments].sort((left, right) => compareSeniorVetSchedule(left, right, recordedIds));
+  const savedNotice = params.message ? CLINICAL_NOTICES[params.message] : undefined;
 
   return (
     <>
@@ -49,6 +59,11 @@ export default async function SeniorVetTodayAppointmentsPage({
       </p>
 
       <AppointmentStatusNotice notice={params.notice} statusError={params.statusError} completed={params.completed} />
+      {savedNotice && (
+        <div className="mt-4">
+          <Alert variant="success">{savedNotice}</Alert>
+        </div>
+      )}
 
       <form method="get" className="mt-6 flex flex-wrap items-end gap-3">
         <FormField label="Date" name="day" type="date" defaultValue={day} className="w-auto" />
@@ -89,6 +104,7 @@ export default async function SeniorVetTodayAppointmentsPage({
                 actorRole="SENIOR_VET"
                 staffDay={day}
                 returnTo="/senior-vet/appointments"
+                recordMark={scheduleRecordMark(appointment.status, recordedIds.has(appointment.id))}
               />
             </li>
           ))
@@ -96,4 +112,17 @@ export default async function SeniorVetTodayAppointmentsPage({
       </ul>
     </>
   );
+}
+
+async function recordedAppointmentIds(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  appointmentIds: string[],
+): Promise<Set<string>> {
+  if (appointmentIds.length === 0) return new Set();
+  const { data } = await supabase
+    .from("clinical_records")
+    .select("appointment_id")
+    .in("appointment_id", appointmentIds)
+    .eq("is_current", true);
+  return new Set((data ?? []).map((row) => row.appointment_id).filter((id): id is string => Boolean(id)));
 }

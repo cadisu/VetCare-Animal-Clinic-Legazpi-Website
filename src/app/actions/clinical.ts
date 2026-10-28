@@ -58,7 +58,16 @@ function finish(returnTo: string, message: string): never {
   revalidatePath("/staff", "layout");
   revalidatePath("/senior-vet", "layout");
   revalidatePath("/client", "layout");
-  redirect(`${returnTo}?message=${message}`);
+  const [path, query = ""] = returnTo.split("?");
+  const params = new URLSearchParams(query);
+  params.set("message", message);
+  redirect(`${path}?${params.toString()}`);
+}
+
+function seniorScheduleReturn(returnTo: string, visitDate: string): string | null {
+  const path = returnTo.split("?")[0] ?? "";
+  if (!/^\/senior-vet\/appointments\/[0-9a-f-]{36}$/i.test(path)) return null;
+  return /^\d{4}-\d{2}-\d{2}$/.test(visitDate) ? `/senior-vet/appointments?day=${visitDate}` : "/senior-vet/appointments";
 }
 
 export async function recordWeightAction(_prev: FormState, formData: FormData): Promise<FormState> {
@@ -124,10 +133,9 @@ export async function saveClinicalRecordAction(_prev: FormState, formData: FormD
       });
   if (error) return { error: rpcMessage(error), values };
 
-  finish(
-    clinicalReturnPath(text(formData, "returnTo"), `/staff/pets/${parsed.data.petId}`),
-    parsed.data.lineageId ? "clinical-revised" : "clinical-saved",
-  );
+  const message = parsed.data.lineageId ? "clinical-revised" : "clinical-saved";
+  const returnPath = clinicalReturnPath(text(formData, "returnTo"), `/staff/pets/${parsed.data.petId}`);
+  finish(seniorScheduleReturn(returnPath, parsed.data.visitDate) ?? returnPath, message);
 }
 
 export async function saveVaccinationAction(_prev: FormState, formData: FormData): Promise<FormState> {

@@ -48,6 +48,12 @@ async function petNames(supabase: SupabaseClient, ids: string[]): Promise<Map<st
   return new Map(((data ?? []) as { id: string; name: string }[]).map((pet) => [pet.id, pet.name]));
 }
 
+function receiptTime(value: string | null): number {
+  if (!value) return Number.NEGATIVE_INFINITY;
+  const time = Date.parse(value);
+  return Number.isFinite(time) ? time : Number.NEGATIVE_INFINITY;
+}
+
 function toSummary(row: TransactionRow, names: Map<string, string>): ClientReceiptSummary {
   return {
     id: row.id,
@@ -73,7 +79,9 @@ export async function listClientReceipts(supabase: SupabaseClient): Promise<Clie
     supabase,
     rows.map((row) => row.pet_id).filter((id): id is string => Boolean(id)),
   );
-  return rows.map((row) => toSummary(row, names));
+  return rows
+    .map((row) => toSummary(row, names))
+    .sort((left, right) => receiptTime(right.occurredAt) - receiptTime(left.occurredAt));
 }
 
 export async function getClientReceipt(supabase: SupabaseClient, transactionId: string): Promise<ClientReceipt | null> {

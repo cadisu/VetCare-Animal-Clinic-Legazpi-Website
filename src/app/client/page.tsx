@@ -121,7 +121,7 @@ export default async function ClientDashboardPage() {
                 {loyalty.stampCount} / {loyaltyLimit} stamps
               </p>
               <div className="mt-3">
-                <StampCard count={loyalty.stampCount} limit={loyaltyLimit} />
+                <StampCard count={loyalty.stampCount} limit={loyaltyLimit} rewards={loyalty.rewardMarks} />
               </div>
               <p className="mt-3 text-sm text-muted">
                 {loyaltyLeft === 0

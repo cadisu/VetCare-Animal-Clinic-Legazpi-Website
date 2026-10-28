@@ -50,70 +50,42 @@ export default async function StaffDashboardPage({
       />
       <AppointmentStatusNotice notice={query.notice} statusError={query.statusError} />
       <FlashNotice flash={query.flash} flashError={query.flashError} />
-      <p className="mb-6 text-sm text-muted">
-        <Link href="/staff/sms-templates" className="font-semibold text-brand hover:underline">
-          Edit appointment SMS messages
-        </Link>
-      </p>
-      <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-        <section className={panelPaddingClass("xl:col-span-2")}>
+      <div className="space-y-6">
+        <div className="grid gap-6 lg:grid-cols-2">
+        <section className={panelPaddingClass()}>
           <div className="flex items-start justify-between gap-3">
             <h2 className="text-base font-semibold text-ink">Today&apos;s Appointments ({todayAppointments.length})</h2>
             <Link href={`/staff/appointments?day=${today}`} className="text-sm font-semibold text-brand hover:underline">
               Open schedule
             </Link>
           </div>
-          <ul className="mt-4 space-y-2">
-            {todayAppointments.slice(0, 5).map((a) => (
-              <li key={a.id}>
-                <AppointmentCard
-                  appointment={a}
-                  href={`/staff/appointments/${a.id}`}
-                  showClient
-                  showStaffActions
-                  showStatusActions
-                  actorRole={actorRole}
-                  staffDay={today}
-                  returnTo="/staff"
-                />
-              </li>
-            ))}
-            {todayAppointments.length === 0 && (
-              <p className="text-sm text-muted">No appointments scheduled for today yet.</p>
-            )}
-          </ul>
+          {todayAppointments.length === 0 ? (
+            <p className="mt-4 text-sm text-muted">No appointments scheduled for today yet.</p>
+          ) : (
+            <ul className="mt-4 space-y-2">
+              {todayAppointments.slice(0, CLIENT_UPCOMING_PREVIEW_LIMIT).map((a) => (
+                <li key={a.id}>
+                  <AppointmentCard
+                    appointment={a}
+                    href={`/staff/appointments/${a.id}`}
+                    showClient
+                    showStaffActions
+                    showStatusActions
+                    actorRole={actorRole}
+                    staffDay={today}
+                    returnTo="/staff"
+                  />
+                </li>
+              ))}
+            </ul>
+          )}
+          {todayAppointments.length > CLIENT_UPCOMING_PREVIEW_LIMIT && (
+            <p className="mt-3 text-sm text-muted">
+              Showing {CLIENT_UPCOMING_PREVIEW_LIMIT} of {todayAppointments.length}. The rest are on the schedule.
+            </p>
+          )}
         </section>
         <section className={panelPaddingClass()}>
-          <h2 className="text-base font-semibold text-ink">Walk-ins today ({walkIns.length})</h2>
-          <p className="mt-2 text-sm text-muted">Register walk-ins for existing clients and pets.</p>
-          <Link href="/staff/appointments/new?source=WALK_IN" className={buttonClass("primary", "md", "mt-4 inline-flex")}>
-            New walk-in
-          </Link>
-        </section>
-        <Link
-          href="/staff/clients"
-          className={panelClass("p-6 transition-colors hover:border-brand/40 hover:bg-highlight/80")}
-        >
-          <h2 className="text-base font-semibold text-ink">Clients</h2>
-          <p className="mt-3 text-sm text-muted">Search clients and view their pets.</p>
-          <p className="mt-4 text-sm font-semibold text-brand">Open clients →</p>
-        </Link>
-        <Link
-          href="/staff/pos"
-          className={panelClass("p-6 transition-colors hover:border-brand/40 hover:bg-highlight/80")}
-        >
-          <h2 className="text-base font-semibold text-ink">POS</h2>
-          <p className="mt-3 text-sm text-muted">
-            Record services, products, and the amount paid at the counter.
-          </p>
-          <p className="mt-4 text-sm font-semibold text-brand">Open POS →</p>
-        </Link>
-        <InventoryAlertCard alerts={alerts} />
-        <PlaceholderCard
-          title="Analytics"
-          description="Operational analytics will appear here."
-        />
-        <section className={panelPaddingClass("xl:col-span-3")}>
           <div className="flex items-start justify-between gap-3">
             <div>
               <h2 className="text-base font-semibold text-ink">Upcoming appointments</h2>
@@ -148,6 +120,39 @@ export default async function StaffDashboardPage({
             </p>
           )}
         </section>
+        </div>
+        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+        <section className={panelPaddingClass()}>
+          <h2 className="text-base font-semibold text-ink">Walk-ins today ({walkIns.length})</h2>
+          <p className="mt-2 text-sm text-muted">Register walk-ins for existing clients and pets.</p>
+          <Link href="/staff/appointments/new?source=WALK_IN" className={buttonClass("primary", "md", "mt-4 inline-flex")}>
+            New walk-in
+          </Link>
+        </section>
+        <Link
+          href="/staff/clients"
+          className={panelClass("p-6 transition-colors hover:border-brand/40 hover:bg-highlight/80")}
+        >
+          <h2 className="text-base font-semibold text-ink">Clients</h2>
+          <p className="mt-3 text-sm text-muted">Search clients and view their pets.</p>
+          <p className="mt-4 text-sm font-semibold text-brand">Open clients →</p>
+        </Link>
+        <Link
+          href="/staff/pos"
+          className={panelClass("p-6 transition-colors hover:border-brand/40 hover:bg-highlight/80")}
+        >
+          <h2 className="text-base font-semibold text-ink">POS</h2>
+          <p className="mt-3 text-sm text-muted">
+            Record services, products, and the amount paid at the counter.
+          </p>
+          <p className="mt-4 text-sm font-semibold text-brand">Open POS →</p>
+        </Link>
+        <InventoryAlertCard alerts={alerts} />
+        <PlaceholderCard
+          title="Analytics"
+          description="Operational analytics will appear here."
+        />
+        </div>
       </div>
     </>
   );

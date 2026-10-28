@@ -25,6 +25,11 @@ export type LoyaltyProgramView = {
   serviceIds: string[];
 };
 
+export type LoyaltyStampReward = {
+  milestone: number;
+  name: string;
+};
+
 export type LoyaltyRewardView = {
   id: string;
   name: string;

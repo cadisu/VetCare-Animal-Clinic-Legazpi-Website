@@ -9,6 +9,7 @@ import type {
   LoyaltyProgramView,
   LoyaltyRewardType,
   LoyaltyRewardView,
+  LoyaltyStampReward,
 } from "@/lib/loyalty/types";
 
 type ProgramRow = {
@@ -122,12 +123,15 @@ export type ClientCard = {
   grants: LoyaltyGrantView[];
   history: LoyaltyHistoryRow[];
   milestones: number[];
+  rewardMarks: LoyaltyStampReward[];
 };
 
 export async function getClientCard(supabase: SupabaseClient): Promise<ClientCard> {
   const program = await getLoyaltyProgram(supabase);
   const rewards = await listLoyaltyRewards(supabase);
-  const milestones = rewards.filter((reward) => reward.isActive).map((reward) => reward.milestone);
+  const activeRewards = rewards.filter((reward) => reward.isActive);
+  const milestones = activeRewards.map((reward) => reward.milestone);
+  const rewardMarks = activeRewards.map((reward) => ({ milestone: reward.milestone, name: reward.name }));
 
   const { data: cycle } = await supabase
     .from("loyalty_cycles")
@@ -227,5 +231,5 @@ export async function getClientCard(supabase: SupabaseClient): Promise<ClientCar
     }),
   ].sort((left, right) => right.at.localeCompare(left.at));
 
-  return { program, stampCount, grants, history, milestones };
+  return { program, stampCount, grants, history, milestones, rewardMarks };
 }

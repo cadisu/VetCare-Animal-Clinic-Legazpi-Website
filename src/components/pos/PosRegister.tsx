@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { listClientRewardsAction } from "@/app/actions/loyalty";
 import { ConfirmSubmitButton } from "@/components/ui/ConfirmSubmitButton";
 import { buttonClass } from "@/components/ui/button-styles";
@@ -132,6 +132,20 @@ export function PosRegister({
   const change = Number.isFinite(tenderedAmount) ? cashChange(totals.total, tenderedAmount) : null;
   const needsClinicalNote = lines.some((line) => line.requiresVeterinarian);
   const selectedVisit = visits.find((visit) => visit.id === appointmentId);
+
+  useEffect(() => {
+    if (!initialClientId) return;
+    let cancelled = false;
+    startTransition(async () => {
+      const context = await loadClientSaleContextAction(initialClientId, initialTransactionId);
+      if (cancelled) return;
+      setPets(context.pets);
+      setVisits(context.visits);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [initialClientId, initialTransactionId]);
 
   const cartPayload = useMemo(
     () =>

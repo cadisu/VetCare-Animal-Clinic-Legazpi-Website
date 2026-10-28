@@ -6,12 +6,14 @@ import { z } from "zod";
 import type { FormState } from "@/app/actions/auth";
 import type { AppointmentStatus, AvailabilityRow } from "@/lib/appointments/constants";
 import { fetchAvailability } from "@/lib/appointments/server";
+import { listBilledServiceIds } from "@/lib/pos/server";
 import {
   appointmentNoticeCode,
   appointmentTransitionErrorCode,
 } from "@/lib/appointments/transitions";
 import type { UserRole } from "@/lib/auth/roles";
 import { requireRole } from "@/lib/auth/session";
+import { todayIso } from "@/lib/dates";
 import { isUuid } from "@/lib/pets/constants";
 import {
   appointmentTransitionSchema,
@@ -28,8 +30,15 @@ function rpcMessage(error: { message?: string } | null): string {
     return "This pet already has an appointment at that date and time.";
   }
   if (msg.includes("full")) return "This time slot is already full. Please choose another.";
-  if (msg.includes("past")) return "That time has passed. Please choose a later slot.";
+  if (msg.includes("past date")) return "Walk-ins can only be recorded for today. Choose a time from today.";
+  if (msg.includes("past") || msg.includes("already ended")) return "That time has passed. Please choose a later slot.";
   if (msg.includes("Not authorized")) return "You are not allowed to perform this action.";
+  if (msg.includes("requires a veterinarian slot")) {
+    return "This service needs a veterinarian time. Choose the veterinarian, then pick a time.";
+  }
+  if (msg.includes("clinic-wide slots")) {
+    return "This service uses a clinic time. Choose the time again.";
+  }
   if (msg.includes("Invalid")) return msg;
   return GENERIC;
 }
@@ -157,6 +166,53 @@ export async function fetchBookingAvailabilityAction(
   }
 }
 
+export async function fetchStaffBookingAvailabilityAction(
+  clientId: string,
+  serviceId: string,
+  veterinarianId: string | null,
+  petId: string,
+): Promise<{ availability: AvailabilityRow[] } | { error: string }> {
+  await requireRole(["STAFF", "SENIOR_VET"]);
+  if (!isUuid(clientId)) return { error: "Select a client." };
+  if (!isUuid(serviceId)) return { error: "Invalid service." };
+  if (!isUuid(petId)) return { error: "Select a pet." };
+
+  const supabase = await createClient();
+  const { data: service } = await supabase
+    .from("services")
+    .select("id, requires_veterinarian, is_active, is_bookable")
+    .eq("id", serviceId)
+    .maybeSingle();
+
+  if (!service?.is_active || !service.is_bookable) {
+    return { error: "Service is not available for booking." };
+  }
+
+  const { data: pet } = await supabase
+    .from("pets")
+    .select("id")
+    .eq("id", petId)
+    .eq("owner_id", clientId)
+    .eq("is_archived", false)
+    .maybeSingle();
+  if (!pet) return { error: "Select a pet." };
+
+  let vetId: string | null = veterinarianId;
+  if (service.requires_veterinarian) {
+    if (!vetId || !isUuid(vetId)) return { error: "Select a veterinarian." };
+  } else {
+    vetId = null;
+  }
+
+  const today = todayIso();
+  try {
+    const availability = await fetchAvailability(supabase, serviceId, vetId, today, today, petId);
+    return { availability };
+  } catch {
+    return { error: GENERIC };
+  }
+}
+
 function transitionDestination(
   role: UserRole,
   appointmentId: string,
@@ -196,6 +252,44 @@ function redirectWithAppointmentStatus(
   if (statusError) params.set("statusError", statusError);
   const qs = params.toString();
   redirect(qs ? `${path}?${qs}` : path);
+}
+
+async function finishedVisitBilling(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  appointmentId: string,
+): Promise<{ kind: "bill"; id: string } | { kind: "already-billed" } | { kind: "missing-price" } | { kind: "continue" }> {
+  const { data: openBill } = await supabase
+    .from("pos_transactions")
+    .select("id")
+    .eq("appointment_id", appointmentId)
+    .eq("status", "OPEN")
+    .limit(1)
+    .maybeSingle();
+  if (openBill?.id) return { kind: "bill", id: openBill.id };
+
+  const { data: appointment } = await supabase
+    .from("appointments")
+    .select("service_id")
+    .eq("id", appointmentId)
+    .maybeSingle();
+  const serviceId = appointment?.service_id;
+  if (!serviceId) return { kind: "continue" };
+
+  const billed = await listBilledServiceIds(supabase, appointmentId);
+  if (billed.includes(serviceId)) return { kind: "already-billed" };
+
+  const { data: service } = await supabase
+    .from("services")
+    .select("price, is_active")
+    .eq("id", serviceId)
+    .maybeSingle();
+  if (!service?.is_active || service.price == null) return { kind: "missing-price" };
+
+  const { data, error } = await supabase.rpc("pos_open_for_appointment", {
+    p_appointment_id: appointmentId,
+  });
+  if (error || typeof data !== "string") return { kind: "continue" };
+  return { kind: "bill", id: data };
 }
 
 function revalidateAppointmentViews(appointmentId: string) {
@@ -249,6 +343,20 @@ export async function transitionAppointmentStatusAction(formData: FormData): Pro
       null,
       appointmentTransitionErrorCode(error.message ?? ""),
     );
+  }
+
+  if (profile.role !== "CLIENT" && nextStatus === "COMPLETED") {
+    const billing = await finishedVisitBilling(supabase, appointmentId);
+    if (billing.kind === "bill") {
+      revalidatePath("/staff/pos", "layout");
+      redirect(`/staff/pos?bill=${billing.id}&notice=visit-finished`);
+    }
+    if (billing.kind === "already-billed") {
+      redirectWithAppointmentStatus(destination.path, destination.keepDay, day, "already_billed", null);
+    }
+    if (billing.kind === "missing-price") {
+      redirectWithAppointmentStatus(destination.path, destination.keepDay, day, "completed", "missing_price");
+    }
   }
 
   redirectWithAppointmentStatus(

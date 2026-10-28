@@ -4,8 +4,11 @@ import { describe, expect, it } from "vitest";
 import {
   APPOINTMENT_STATUSES,
   STATUS_LABELS,
+  compareSeniorVetSchedule,
   isClientUpcomingAppointment,
+  scheduleRecordMark,
   statusLabel,
+  type AppointmentListRow,
   type AppointmentStatus,
 } from "@/lib/appointments/constants";
 import {
@@ -184,6 +187,34 @@ describe("upcoming appointments", () => {
   });
 });
 
+describe("senior vet schedule marks", () => {
+  function visit(id: string, status: AppointmentStatus, time: string): AppointmentListRow {
+    return {
+      id,
+      status,
+      slot: { slot_date: "2026-10-29", start_time: time },
+    } as AppointmentListRow;
+  }
+
+  it("puts records still needed first and cancelled or no-show visits last", () => {
+    const recorded = new Set(["done"]);
+    const rows = [
+      visit("cancelled", "CANCELLED", "08:00:00"),
+      visit("done", "COMPLETED", "09:00:00"),
+      visit("waiting", "IN_CONSULTATION", "11:00:00"),
+      visit("missed", "NO_SHOW", "07:00:00"),
+      visit("booked", "CONFIRMED", "10:00:00"),
+    ].sort((left, right) => compareSeniorVetSchedule(left, right, recorded));
+
+    expect(rows.map((row) => row.id)).toEqual(["waiting", "done", "booked", "missed", "cancelled"]);
+    expect(scheduleRecordMark("IN_CONSULTATION", false)).toBe("pending");
+    expect(scheduleRecordMark("COMPLETED", true)).toBe("recorded");
+    expect(scheduleRecordMark("CANCELLED", false)).toBe("closed");
+    expect(scheduleRecordMark("NO_SHOW", false)).toBe("closed");
+    expect(scheduleRecordMark("CONFIRMED", false)).toBeNull();
+  });
+});
+
 describe("safe error text", () => {
   it("maps database exceptions to short codes and hides the original message", () => {
     expect(appointmentTransitionErrorCode("Not authorized")).toBe("unauthorized");
@@ -197,6 +228,8 @@ describe("safe error text", () => {
     expect(appointmentStatusError("drop table appointments")).toBe(APPOINTMENT_STATUS_ERRORS.generic);
     expect(appointmentStatusError("drop table appointments")).not.toMatch(/drop table/i);
     expect(appointmentStatusNotice("confirmed")).toBe("Appointment confirmed.");
+    expect(appointmentStatusNotice("already_billed")).toBe("This visit is already billed.");
+    expect(appointmentStatusError("missing_price")).toBe("Set a price for this service before adding it.");
     expect(appointmentStatusNotice("select * from appointments")).toBeNull();
   });
 });

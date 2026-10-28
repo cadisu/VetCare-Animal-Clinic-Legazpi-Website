@@ -100,6 +100,7 @@ const POS_ERROR_TEXT: Record<string, string> = {
 
 const POS_NOTICE_TEXT: Record<string, string> = {
   paid: "Amount paid recorded. The visit is not marked completed by this step.",
+  "visit-finished": "Visit marked finished. Add products or take payment.",
   voided: "The bill was voided and remains in the history.",
   saved: "Product saved.",
   "bill-saved": "Open bill saved. Stock has not changed.",

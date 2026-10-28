@@ -3,7 +3,7 @@ import Link from "next/link";
 import { StaffAppointmentForm } from "@/components/appointments/StaffAppointmentForm";
 import { DashboardHeading } from "@/components/portal/PlaceholderCard";
 import { buttonClass } from "@/components/ui/button-styles";
-import { fetchAvailability, listBookableServices } from "@/lib/appointments/server";
+import { listActiveVeterinarians, listBookableServices } from "@/lib/appointments/server";
 import { requireRole } from "@/lib/auth/session";
 import { todayIso } from "@/lib/dates";
 import { createClient } from "@/lib/supabase/server";
@@ -75,12 +75,11 @@ export default async function StaffNewAppointmentPage({
     );
   }
 
-  const services = await listBookableServices(supabase);
-  const grooming = services.find((s) => !s.requires_veterinarian) ?? services[0];
+  const [services, veterinarians] = await Promise.all([
+    listBookableServices(supabase),
+    listActiveVeterinarians(supabase),
+  ]);
   const day = todayIso();
-  const availability = grooming
-    ? await fetchAvailability(supabase, grooming.id, null, day, day)
-    : [];
 
   const defaultSource = params.source === "APPOINTMENT" ? "APPOINTMENT" : "WALK_IN";
 
@@ -92,7 +91,7 @@ export default async function StaffNewAppointmentPage({
         clientName={client.full_name}
         pets={pets}
         services={services}
-        availability={availability}
+        veterinarians={veterinarians}
         day={day}
         defaultSource={defaultSource}
       />
