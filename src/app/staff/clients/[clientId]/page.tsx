@@ -34,7 +34,7 @@ export default async function StaffClientPage({
     supabase
       .from("profiles")
       .select(
-        "id, full_name, last_name, first_name, middle_name, email, contact_number, address, birthdate, status, created_at",
+        "id, full_name, last_name, first_name, middle_name, name_suffix, email, contact_number, address, birthdate, status, created_at",
       )
       .eq("id", clientId)
       .eq("role", "CLIENT")
@@ -76,6 +76,7 @@ export default async function StaffClientPage({
           <Detail label="Last name" value={client.last_name} />
           <Detail label="First name" value={client.first_name} />
           <Detail label="Middle name" value={client.middle_name} />
+          <Detail label="Suffix" value={client.name_suffix} />
           <Detail label="Birthdate" value={formatDate(client.birthdate)} />
           <Detail label="Contact no." value={client.contact_number} />
           <Detail label="Email" value={client.email} />

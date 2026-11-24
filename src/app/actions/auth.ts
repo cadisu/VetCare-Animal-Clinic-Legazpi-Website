@@ -89,6 +89,7 @@ export async function registerAction(_prev: FormState, formData: FormData): Prom
     lastName: text(formData, "lastName"),
     middleName: text(formData, "middleName"),
     firstName: text(formData, "firstName"),
+    nameSuffix: text(formData, "nameSuffix"),
     address: text(formData, "address"),
     birthdate: text(formData, "birthdate"),
     contactNumber: text(formData, "contactNumber"),
@@ -107,7 +108,7 @@ export async function registerAction(_prev: FormState, formData: FormData): Prom
   }
   if (!isSupabaseConfigured()) return { error: NOT_CONFIGURED, values };
 
-  const { lastName, middleName, firstName, address, birthdate, contactNumber, email, password } =
+  const { lastName, middleName, firstName, nameSuffix, address, birthdate, contactNumber, email, password } =
     parsed.data;
   const siteUrl = await getSiteUrl();
   const supabase = await createClient();
@@ -122,6 +123,7 @@ export async function registerAction(_prev: FormState, formData: FormData): Prom
         last_name: lastName,
         middle_name: middleName ?? "",
         first_name: firstName,
+        name_suffix: nameSuffix ?? "",
         address,
         birthdate,
         contact_number: contactNumber,

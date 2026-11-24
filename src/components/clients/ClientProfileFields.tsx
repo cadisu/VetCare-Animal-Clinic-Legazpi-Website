@@ -1,7 +1,11 @@
 import { FormField, TextAreaField } from "@/components/ui/FormField";
+import { PhoneNumberField } from "@/components/clients/PhoneNumberField";
 
 type Values = Partial<
-  Record<"lastName" | "middleName" | "firstName" | "address" | "birthdate" | "contactNumber", string>
+  Record<
+    "lastName" | "middleName" | "firstName" | "nameSuffix" | "address" | "birthdate" | "contactNumber",
+    string
+  >
 >;
 
 /** Personal fields used by both client registration and the "My Profile" page. */
@@ -44,6 +48,16 @@ export function ClientProfileFields({
         defaultValue={values?.firstName}
         errors={fieldErrors?.firstName}
       />
+      <FormField
+        label="Suffix"
+        labelNote="(optional)"
+        name="nameSuffix"
+        autoComplete="honorific-suffix"
+        maxLength={20}
+        placeholder="Jr., Sr., III"
+        defaultValue={values?.nameSuffix}
+        errors={fieldErrors?.nameSuffix}
+      />
       <TextAreaField
         label="Address"
         name="address"
@@ -66,18 +80,7 @@ export function ClientProfileFields({
         defaultValue={values?.birthdate}
         errors={fieldErrors?.birthdate}
       />
-      <FormField
-        label="Contact no."
-        name="contactNumber"
-        type="tel"
-        autoComplete="tel"
-        inputMode="tel"
-        placeholder="09171234567"
-        required
-        hint="Used for appointment reminders."
-        defaultValue={values?.contactNumber}
-        errors={fieldErrors?.contactNumber}
-      />
+      <PhoneNumberField defaultValue={values?.contactNumber} errors={fieldErrors?.contactNumber} />
     </>
   );
 }

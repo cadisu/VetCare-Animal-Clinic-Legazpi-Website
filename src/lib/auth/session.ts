@@ -8,11 +8,12 @@ import { isUserRole, type AccountStatus, type UserRole } from "./roles";
 
 export type Profile = {
   id: string;
-  /** Derived in the database from first/middle/last name (read-only). */
+  /** Derived in the database from first, middle, last name, and suffix (read-only). */
   full_name: string;
   last_name: string;
   first_name: string;
   middle_name: string | null;
+  name_suffix: string | null;
   email: string;
   contact_number: string | null;
   address: string | null;
@@ -24,7 +25,7 @@ export type Profile = {
 };
 
 export const PROFILE_COLUMNS =
-  "id, full_name, last_name, first_name, middle_name, email, contact_number, address, birthdate, role, status, onboarded_at, created_at";
+  "id, full_name, last_name, first_name, middle_name, name_suffix, email, contact_number, address, birthdate, role, status, onboarded_at, created_at";
 
 export type Session = { user: User; profile: Profile | null };
 

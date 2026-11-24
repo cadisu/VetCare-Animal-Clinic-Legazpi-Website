@@ -44,6 +44,7 @@ export default async function ClientProfilePage() {
             lastName: profile.last_name,
             middleName: profile.middle_name ?? "",
             firstName: profile.first_name,
+            nameSuffix: profile.name_suffix ?? "",
             address: profile.address ?? "",
             birthdate: profile.birthdate ?? "",
             contactNumber: profile.contact_number ?? "",

@@ -6,6 +6,7 @@ import { dispatchReminders, type ReminderCandidate } from "@/lib/sms/dispatch";
 import { deliverClaimedMessage, type ClaimedSms } from "@/lib/sms/deliver";
 import { evaluateManualReminder, manualReminderClaimDate } from "@/lib/sms/manual-reminder";
 import { toUnisMsRecipient } from "@/lib/sms/phone";
+import { phoneSchema } from "@/lib/validation/common";
 import {
   canManuallyRetry,
   classifyGetResponse,
@@ -130,6 +131,9 @@ describe("phone numbers", () => {
     expect(toUnisMsRecipient("09171234567")).toBe("+639171234567");
     expect(toUnisMsRecipient("+639171234567")).toBe("+639171234567");
     expect(toUnisMsRecipient("639171234567")).toBe("+639171234567");
+    expect(phoneSchema.parse("9171234567")).toBe("09171234567");
+    expect(phoneSchema.parse("09171234567")).toBe("09171234567");
+    expect(toUnisMsRecipient("9171234567")).toBe("+639171234567");
   });
 
   it("rejects numbers that are not mobile", () => {

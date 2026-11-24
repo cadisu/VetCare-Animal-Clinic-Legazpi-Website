@@ -21,6 +21,14 @@ const middleNameSchema = z
   .refine((v) => v === "" || NAME_PATTERN.test(v), "Use letters only for your middle name.")
   .transform((v) => (v === "" ? null : v));
 
+/** Jr., Sr., III, and similar. Blank is allowed. */
+const nameSuffixSchema = z
+  .string()
+  .trim()
+  .max(20, "Suffix is too long.")
+  .refine((v) => v === "" || NAME_PATTERN.test(v), "Use letters only for your suffix.")
+  .transform((v) => (v === "" ? null : v));
+
 const birthdateSchema = z
   .string()
   .trim()
@@ -40,6 +48,7 @@ export const clientProfileFields = {
   lastName: nameSchema("last name"),
   firstName: nameSchema("first name"),
   middleName: middleNameSchema,
+  nameSuffix: nameSuffixSchema,
   address: z
     .string()
     .trim()

@@ -56,6 +56,7 @@ export async function updateAdminProfileAction(
     lastName: text(formData, "lastName"),
     middleName: text(formData, "middleName"),
     firstName: text(formData, "firstName"),
+    nameSuffix: text(formData, "nameSuffix"),
     contactNumber: text(formData, "contactNumber"),
     address: text(formData, "address"),
     birthdate: text(formData, "birthdate"),
