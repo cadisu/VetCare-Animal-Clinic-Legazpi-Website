@@ -70,7 +70,7 @@ export function InventoryMovementForm({
           />
           <FormField label="Supplier" name="supplier" labelNote="(optional)" maxLength={120} />
           <FormField label="Reference" name="referenceNote" labelNote="(optional)" maxLength={80} placeholder="Delivery note or invoice" />
-          <FormField label="Unit cost" name="unitCost" labelNote="(optional)" inputMode="decimal" />
+          <FormField label="Purchase cost" name="unitCost" labelNote="(optional)" hint="What the clinic paid for one unit." inputMode="decimal" />
         </>
       )}
       <TextAreaField label="Reason" name="reason" required />

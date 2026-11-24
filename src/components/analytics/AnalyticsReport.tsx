@@ -339,7 +339,7 @@ export function InventoryAnalytics({ alerts }: { alerts: InventoryAlerts }) {
           rows={alerts.low.map((product) => ({
             id: product.id,
             name: product.name,
-            detail: `${product.quantityOnHand} on hand${product.minimumStock === null ? "" : `, minimum ${product.minimumStock}`}`,
+            detail: `${product.quantityOnHand} on hand${product.minimumStock === null ? "" : `, low-stock warning ${product.minimumStock}`}`,
           }))}
         />
         <StockTable

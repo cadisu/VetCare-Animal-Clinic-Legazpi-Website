@@ -65,9 +65,10 @@ export function ProductFormModal({
         <FormField label="Unit" name="unit" required maxLength={40} placeholder="piece, bottle, tablet" defaultValue={product?.unit ?? ""} />
         <FormField label="Selling price" name="price" required inputMode="decimal" defaultValue={product ? String(product.price) : ""} />
         <FormField
-          label="Unit cost"
+          label="Purchase cost"
           name="unitCost"
           labelNote="(optional)"
+          hint="What the clinic paid for one unit. This is separate from the selling price."
           inputMode="decimal"
           defaultValue={product?.unit_cost === null || product?.unit_cost === undefined ? "" : String(product.unit_cost)}
         />
@@ -101,9 +102,10 @@ export function ProductFormModal({
           </fieldset>
         )}
         <FormField
-          label="Minimum stock"
+          label="Low-stock warning"
           name="minimumStock"
           labelNote="(optional)"
+          hint="Show a low-stock alert when this many, or fewer, are left."
           inputMode="numeric"
           defaultValue={product?.minimum_stock === null || product?.minimum_stock === undefined ? "" : String(product.minimum_stock)}
         />

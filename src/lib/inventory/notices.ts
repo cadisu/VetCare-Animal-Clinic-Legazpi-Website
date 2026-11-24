@@ -20,7 +20,7 @@ const INVENTORY_ERROR_TEXT: Record<string, string> = {
   "batch-not-expired": "Expired can only be recorded for a batch whose date is already past.",
   "choose-batch": "Choose the batch this change applies to.",
   "warning-days": "Enter a warning period from 1 to 365 days.",
-  "unit-cost": "Enter a valid unit cost, or leave it blank.",
+  "unit-cost": "Enter a valid purchase cost, or leave it blank.",
   supplier: "Enter a shorter supplier name.",
   reference: "Enter a shorter reference.",
   "movement-type": "Choose a stock movement.",

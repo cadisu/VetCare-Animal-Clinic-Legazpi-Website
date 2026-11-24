@@ -74,7 +74,7 @@ export default async function InventoryProductPage({
                   <th className="px-4 py-3">Received qty</th>
                   <th className="px-4 py-3">Left</th>
                   <th className="px-4 py-3">Supplier</th>
-                  <th className="px-4 py-3">Cost</th>
+                  <th className="px-4 py-3">Purchase cost</th>
                   <th className="px-4 py-3">Status</th>
                 </tr>
               </thead>

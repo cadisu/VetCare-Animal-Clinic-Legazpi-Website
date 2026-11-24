@@ -12,7 +12,12 @@ export function StampCard({
 }) {
   const slots = stampSlots(count, limit);
   return (
-    <ol className="grid grid-cols-4 gap-2 sm:grid-cols-6" aria-label={`${count} of ${limit} stamps`}>
+    <div className="overflow-x-auto">
+    <ol
+      className="grid w-full gap-2"
+      style={{ gridTemplateColumns: `repeat(${slots.length}, minmax(2.75rem, 1fr))` }}
+      aria-label={`${count} of ${limit} stamps`}
+    >
       {slots.map((filled, index) => {
         const stamp = index + 1;
         const names = stamp <= limit
@@ -22,12 +27,8 @@ export function StampCard({
         return (
           <li
             key={index}
-            className={`relative flex aspect-square items-center justify-center overflow-hidden rounded-full border text-sm font-semibold ${
-              rewardReached
-                ? "border-brand bg-white"
-                : filled
-                  ? "border-brand bg-brand text-white"
-                  : "border-line bg-white text-muted"
+            className={`mx-auto flex aspect-square w-full max-w-16 items-center justify-center rounded-full border bg-white ${
+              rewardReached || filled ? "border-brand" : "border-line"
             }`}
           >
             <span className="sr-only">
@@ -35,18 +36,15 @@ export function StampCard({
                 ? `Reward reached, ${names.join(", ")}, stamp ${stamp}`
                 : `${filled ? "Filled stamp" : "Empty stamp"} ${stamp}`}
             </span>
-            {rewardReached ? (
-              <img
-                src="/VetCare_Logo.png"
-                alt=""
-                className="absolute left-[-23%] top-[-4%] w-[146%] max-w-none"
-              />
-            ) : (
-              <span aria-hidden="true">{filled ? "●" : "○"}</span>
-            )}
+            <img
+              src="/VetCare_Logo.png"
+              alt=""
+              className={`h-3/5 w-3/5 object-contain ${filled ? "" : "opacity-30"}`}
+            />
           </li>
         );
       })}
     </ol>
+    </div>
   );
 }

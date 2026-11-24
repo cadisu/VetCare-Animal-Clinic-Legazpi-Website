@@ -106,7 +106,7 @@ export default async function ClientDashboardPage() {
             </ul>
           )}
         </section>
-        <section className={panelPaddingClass()}>
+        <section className={panelPaddingClass("md:col-span-2")}>
           <div className="flex items-start justify-between gap-3">
             <h2 className="text-base font-semibold text-ink">Loyalty</h2>
             <Link href="/client/loyalty" className="text-sm font-semibold text-brand hover:underline">

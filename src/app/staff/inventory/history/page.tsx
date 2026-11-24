@@ -105,7 +105,7 @@ export default async function InventoryHistoryPage({
                     {row.quantity_delta > 0 ? "+" : ""}
                     {row.quantity_delta} {row.unit}
                     {row.unit_cost !== null ? (
-                      <span className="mt-0.5 block text-xs text-muted">{formatPeso(row.unit_cost)} cost</span>
+                      <span className="mt-0.5 block text-xs text-muted">{formatPeso(row.unit_cost)} purchase cost</span>
                     ) : null}
                   </td>
                   <td className="px-4 py-3 text-xs text-muted">{row.batch_label}</td>

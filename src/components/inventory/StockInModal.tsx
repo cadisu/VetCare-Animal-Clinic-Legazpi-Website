@@ -46,7 +46,7 @@ export function StockInModal({
         <FormField label="Quantity received" name="quantity" required inputMode="numeric" />
         <FormField label="Expiration date" name="expirationDate" type="date" labelNote="(optional)" />
         <FormField label="Supplier for this receipt" name="supplier" labelNote="(optional)" maxLength={120} />
-        <FormField label="Unit cost for this receipt" name="unitCost" labelNote="(optional)" inputMode="decimal" />
+        <FormField label="Purchase cost for this delivery" name="unitCost" labelNote="(optional)" hint="What the clinic paid for one unit in this delivery." inputMode="decimal" />
         <FormField label="Reference" name="referenceNote" labelNote="(optional)" maxLength={80} placeholder="Delivery note or invoice" />
         <TextAreaField label="Reason" name="reason" required placeholder="Opening receipt or delivery received" />
         <div className="flex flex-wrap gap-3">
