@@ -13,7 +13,8 @@ const TEAM_IMAGE_FILES: Partial<Record<string, string>> = {
   "katrina-v-barra" : "Katrina-Barra.jpg",
   "renz-mark" : "Renz_Mark.jpg",
   "rk-marie-amor" : "Rk_marie.jpg",
-  "steve-o-bradley" : "steve_cat.jpg"
+  "steve-o-bradley" : "steve_cat.jpg",
+  "richard" : "Richard.jpg"
 };
 
 function teamSlug(name: string): string {

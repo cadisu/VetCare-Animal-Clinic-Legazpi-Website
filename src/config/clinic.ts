@@ -1,8 +1,3 @@
-/**
- * ALL PLACEHOLDER CONTENT LIVES HERE.
- * Replace these values with the real clinic details; every public page reads from this file.
- */
-
 export const clinic = {
   name: "VetCare Veterinary Clinic", // PLACEHOLDER clinic name
   shortName: "VetCare",
@@ -79,7 +74,8 @@ export const team: TeamMember[] = [
   { name: "Katrina V. Barra", title: "Veterinary Intern" },
   { name: "Renz Mark", title: "Veterinary Assistant" },
   { name: "RK Marie Amor", title: "Clinic Receptionist" },
-  { name: "Steve-O Bradley", title: "Employee Cat of the Month" },
+  { name: "Richard", title: "Pet Groomer" },
+  { name: "Steve-O Bradley", title: "Employee Cat of the Month" }
 ];
 
 export const publicNavLinks = [
