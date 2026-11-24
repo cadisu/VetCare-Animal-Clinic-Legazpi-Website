@@ -18,7 +18,6 @@ export default async function RegisterPage() {
   return (
     <AuthCard
       title="Create your account"
-      description="Register as a pet owner to book appointments and keep your pets' records in one place. You can add your pets right after."
       footer={
         <p>
           Already have an account?{" "}

@@ -20,7 +20,6 @@ export function RegisterForm({ maxBirthdate }: { maxBirthdate: string }) {
     <form action={formAction} className="space-y-5" noValidate>
       {state.error && <Alert variant="error">{state.error}</Alert>}
 
-      {/* No role selector on purpose: public sign-up always creates a Client account. */}
       <ClientProfileFields
         values={state.values}
         fieldErrors={state.fieldErrors}
