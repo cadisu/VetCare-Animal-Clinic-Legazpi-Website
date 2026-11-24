@@ -18,10 +18,12 @@ export default async function PublicLayout({ children }: { children: React.React
         Skip to content
       </a>
       <Navbar dashboardHref={dashboardHref} />
-      <main id="main" className="flex-1">
+      <main id="main" className="relative z-10 flex-1">
         {children}
       </main>
-      <Footer />
+      <div className="relative z-10">
+        <Footer />
+      </div>
     </div>
   );
 }

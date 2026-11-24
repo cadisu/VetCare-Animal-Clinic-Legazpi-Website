@@ -17,8 +17,14 @@ export default async function HomePage() {
 
   return (
     <>
+      <img
+        src="/landing-background.jpg"
+        alt=""
+        className="pointer-events-none fixed inset-0 z-0 h-full w-full object-cover"
+      />
+      <div className="relative z-10">
       {/* Hero */}
-      <section className="bg-brand-soft">
+      <section>
         <div className="mx-auto grid max-w-7xl items-center gap-10 px-4 py-16 sm:px-6 sm:py-20 lg:grid-cols-2 lg:gap-16 lg:px-8 lg:py-28">
           <div>
             <p className="text-sm font-semibold uppercase tracking-wider text-accent">
@@ -62,7 +68,7 @@ export default async function HomePage() {
       </section>
 
       {/* Featured services */}
-      <section className="bg-slate-50">
+      <section>
         <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
           <SectionHeading
             center
@@ -109,7 +115,7 @@ export default async function HomePage() {
       </section>
 
       {/* Veterinary team preview */}
-      <section className="bg-slate-50">
+      <section>
         <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
           <SectionHeading
             center
@@ -135,7 +141,7 @@ export default async function HomePage() {
       {/* Clinic hours + contact */}
       <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
         <div className="grid gap-6 lg:grid-cols-2">
-          <div className="rounded-2xl border border-slate-200 p-6 sm:p-8">
+          <div className="rounded-2xl border border-slate-200 bg-white p-6 sm:p-8">
             <h2 className="flex items-center gap-3 text-xl font-bold">
               <ClockIcon className="h-6 w-6 text-brand" /> Clinic Hours
             </h2>
@@ -149,12 +155,13 @@ export default async function HomePage() {
             </dl>
           </div>
 
-          <div className="rounded-2xl border border-slate-200 p-6 sm:p-8">
+          <div className="rounded-2xl border border-slate-200 bg-white p-6 sm:p-8">
             <h2 className="text-xl font-bold">Contact Information</h2>
             <ContactDetails />
           </div>
         </div>
       </section>
+      </div>
     </>
   );
 }
