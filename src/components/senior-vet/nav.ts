@@ -6,8 +6,10 @@ import {
   FolderIcon,
   InventoryIcon,
   PhoneIcon,
+  ShieldIcon,
   StampIcon,
   PosIcon,
+  UserIcon,
   UsersIcon,
 } from "@/components/ui/icons";
 import {
@@ -34,6 +36,8 @@ export const SENIOR_VET_NAV: readonly DashboardNavItem[] = [
     icon: UsersIcon,
     alsoActive: ["/staff/pets"],
   },
+  { href: "/senior-vet/users", label: "Users", icon: UserIcon },
+  { href: "/senior-vet/audit", label: "Audit logs", icon: ShieldIcon },
   { href: "/staff/schedule", label: "Clinic schedule", icon: ClockIcon },
   { href: "/staff/pos", label: "POS", icon: PosIcon },
   { href: "/staff/inventory", label: "Inventory", icon: InventoryIcon, alsoActive: ["/staff/inventory/history"] },

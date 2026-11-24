@@ -1,3 +1,5 @@
+import { ProcessingScreen } from "@/components/ui/ProcessingScreen";
+
 export default function AnalyticsLoading() {
-  return <p className="text-sm text-muted">Loading analytics…</p>;
+  return <ProcessingScreen />;
 }
