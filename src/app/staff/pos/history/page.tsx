@@ -37,10 +37,7 @@ export default async function PosHistoryPage({
 
   return (
     <>
-      <DashboardHeading
-        title="Transaction history"
-        subtitle="Completed and voided bills stay here. They are not deleted."
-      />
+      <DashboardHeading title="Transaction history" />
       <PosNotice notice={query.notice} error={query.error} />
       <PosSectionLinks current="history" />
       <form className="mb-4 grid gap-3 sm:grid-cols-4" action="/staff/pos/history">

@@ -52,10 +52,7 @@ export default async function InventoryPage({
 
   return (
     <>
-      <DashboardHeading
-        title="Inventory"
-        subtitle="Add products, receive batches, and record stock changes in one place."
-      />
+      <DashboardHeading title="Inventory" />
       <InventoryNotice notice={query.notice} error={query.error} />
       <InventorySectionLinks current="inventory" />
       <form className="mb-4 flex flex-wrap gap-3" action="/staff/inventory">

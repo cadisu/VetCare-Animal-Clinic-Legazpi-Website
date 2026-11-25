@@ -38,10 +38,7 @@ export default async function InventoryHistoryPage({
 
   return (
     <>
-      <DashboardHeading
-        title="Movement history"
-        subtitle="Sales, voids, receipts, and losses stay here. They are not edited or deleted."
-      />
+      <DashboardHeading title="Movement history" />
       <InventoryNotice notice={query.notice} error={query.error} />
       <InventorySectionLinks current="history" />
       <form className="mb-6 grid gap-3 lg:grid-cols-5" action="/staff/inventory/history">

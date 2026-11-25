@@ -34,10 +34,7 @@ export default async function ClientBookAppointmentPage() {
 
   return (
     <>
-      <DashboardHeading
-        title="Book an appointment"
-        subtitle="Choose a service, date, time and pet. Capacity is enforced automatically."
-      />
+      <DashboardHeading title="Book an appointment" />
       <Suspense fallback={<BookingWizardFallback />}>
         <BookingWizard
           services={services}

@@ -17,7 +17,7 @@ export default async function ClientReceiptsPage() {
 
   return (
     <>
-      <DashboardHeading title="Receipts" subtitle="Completed and voided bills from the clinic. These cannot be changed here." />
+      <DashboardHeading title="Receipts" />
       {receipts.length === 0 ? (
         <p className="text-sm text-muted">No receipts yet.</p>
       ) : (

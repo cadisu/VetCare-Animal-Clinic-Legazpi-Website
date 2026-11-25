@@ -23,10 +23,7 @@ export default async function AnalyticsPage({
 
   return (
     <>
-      <DashboardHeading
-        title="Analytics"
-        subtitle="Clinic activity for the selected Asia/Manila dates. Inventory alerts below are the current stock, not a historical snapshot."
-      />
+      <DashboardHeading title="Analytics" />
       <AnalyticsFilters
         preset={range.ok ? range.preset : "custom"}
         from={range.ok ? range.from : (query.from ?? "")}

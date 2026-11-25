@@ -38,7 +38,7 @@ export default async function ClientLoyaltyPage() {
     <>
       <DashboardHeading
         title={card.program?.name ?? "Loyalty card"}
-        subtitle={card.program?.description ?? "Stamps from completed visits at the clinic."}
+        subtitle={card.program?.description || undefined}
       />
       {card.program && !card.program.isActive && (
         <p className="mb-6 rounded-lg bg-highlight px-4 py-3 text-sm text-ink">

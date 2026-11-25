@@ -17,7 +17,7 @@ export default async function NewPetPage() {
         ← Back to My Pets
       </Link>
       <div className="mt-4">
-        <DashboardHeading title="Register a pet" subtitle="Tell us about your pet." />
+        <DashboardHeading title="Register a pet" />
       </div>
       <section className="rounded-2xl border border-slate-200 bg-white p-6 sm:p-8">
         <PetForm action={createPetAction} maxDate={todayIso()} submitLabel="Register pet" />

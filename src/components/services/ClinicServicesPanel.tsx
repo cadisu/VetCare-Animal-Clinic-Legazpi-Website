@@ -16,7 +16,7 @@ export async function ClinicServicesPanel({ editId }: { editId?: string }) {
 
   return (
     <>
-      <DashboardHeading title="Clinic services" subtitle="Manage bookable services for appointments." />
+      <DashboardHeading title="Clinic services" />
       <div className="mt-8 grid gap-8 lg:grid-cols-2">
         <section className={panelPaddingClass()}>
           <h2 className="text-base font-semibold">All services</h2>

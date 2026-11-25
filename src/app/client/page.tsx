@@ -46,7 +46,6 @@ export default async function ClientDashboardPage() {
     <>
       <DashboardHeading
         title={`Welcome, ${profile.first_name || "there"}!`}
-        subtitle="Here's an overview of your pets and appointments."
       />
       <div className="grid gap-6 md:grid-cols-2">
         <section className={panelPaddingClass("md:col-span-2 lg:col-span-1")}>

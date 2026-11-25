@@ -33,7 +33,7 @@ export default async function MyPetsPage({
   return (
     <>
       <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
-        <DashboardHeading title="My Pets" subtitle="The pets registered under your account." />
+        <DashboardHeading title="My Pets" />
         <Link href="/client/pets/new" className={buttonClass("primary", "md", "mb-8")}>
           Register a pet
         </Link>

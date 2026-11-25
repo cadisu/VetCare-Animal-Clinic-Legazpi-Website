@@ -38,7 +38,7 @@ export default async function EditPetPage({ params }: { params: Promise<{ petId:
         ← Back to {pet.name}
       </Link>
       <div className="mt-4">
-        <DashboardHeading title={`Edit ${pet.name}`} subtitle="Update your pet's basic information." />
+        <DashboardHeading title={`Edit ${pet.name}`} />
       </div>
       <section className="rounded-2xl border border-slate-200 bg-white p-6 sm:p-8">
         <PetForm

@@ -67,10 +67,7 @@ export default async function SeniorVetAuditPage({
 
   return (
     <>
-      <DashboardHeading
-        title="Audit logs"
-        subtitle="Important account, clinical, appointment, inventory, loyalty, and POS actions. Entries are not edited or deleted."
-      />
+      <DashboardHeading title="Audit logs" />
 
       <form className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4" action="/senior-vet/audit">
         <label className="block text-sm font-medium text-ink">

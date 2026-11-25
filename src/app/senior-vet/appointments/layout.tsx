@@ -10,10 +10,7 @@ export default async function SeniorVetAppointmentsLayout({ children }: { childr
   return (
     <>
       <div className="flex flex-wrap items-start justify-between gap-4">
-        <DashboardHeading
-          title="Appointments"
-          subtitle="Today's visits, upcoming appointments, requests, text messages, and history."
-        />
+        <DashboardHeading title="Appointments" />
         <Link href="/staff/appointments/new?source=WALK_IN" className={buttonClass("primary", "md")}>
           Create Walk-In Appointment
         </Link>

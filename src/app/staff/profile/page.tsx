@@ -20,10 +20,7 @@ export default async function StaffProfilePage() {
 
   return (
     <div className="mx-auto max-w-2xl">
-      <DashboardHeading
-        title="My Profile"
-        subtitle="Update the details shown in your workspace."
-      />
+      <DashboardHeading title="My Profile" />
 
       <section className={panelPaddingClass("mb-6")}>
         <dl className="grid gap-4 sm:grid-cols-2">

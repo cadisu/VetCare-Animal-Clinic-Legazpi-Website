@@ -76,7 +76,7 @@ export default async function ClientAppointmentDetailPage({
 
   return (
     <>
-      <DashboardHeading title="Appointment details" subtitle="Status, reschedule requests, and text messages for this visit." />
+      <DashboardHeading title="Appointment details" />
       <AppointmentStatusNotice notice={query.notice} statusError={query.statusError} />
       <FlashNotice flash={query.flash} flashError={query.flashError} />
       <section className={panelClass("mt-6 p-6")}>

@@ -62,12 +62,11 @@ export function AnalyticsFilters({
   );
 }
 
-function Metric({ label, value, detail }: { label: string; value: string; detail: string }) {
+function Metric({ label, value }: { label: string; value: string }) {
   return (
     <section className={panelPaddingClass()}>
       <h2 className="text-sm font-semibold text-muted">{label}</h2>
       <p className="mt-2 text-2xl font-semibold text-ink">{value}</p>
-      <p className="mt-2 text-sm text-muted">{detail}</p>
     </section>
   );
 }
@@ -100,7 +99,6 @@ export function AnalyticsReportView({ report }: { report: AnalyticsReport }) {
   const visits = report.appointments.scheduled;
   const serviceMax = Math.max(...report.services.rows.map((row) => row.transactionCount), 1);
   const salesMax = Math.max(...report.sales.days.map((day) => day.recordedSales), 0);
-  const quietDays = report.sales.days.filter((day) => day.recordedSales === 0).length;
 
   return (
     <div className="space-y-6">
@@ -111,33 +109,14 @@ export function AnalyticsReportView({ report }: { report: AnalyticsReport }) {
       ) : null}
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <Metric
-          label="Customers registered"
-          value={String(report.customersRegistered)}
-          detail="Client accounts created in this period. Pets and bookings are not included."
-        />
-        <Metric
-          label="Scheduled appointments"
-          value={String(report.appointments.scheduled)}
-          detail="Visits whose appointment date falls in this period."
-        />
-        <Metric
-          label="Booked during this period"
-          value={String(report.appointments.booked)}
-          detail="Appointments created in this period, even when the visit is on another day."
-        />
-        <Metric
-          label={RECORDED_SALES_LABEL}
-          value={formatPeso(report.sales.recordedSales)}
-          detail="Completed bills only. This is the stored amount due after discounts and rewards."
-        />
+        <Metric label="Customers registered" value={String(report.customersRegistered)} />
+        <Metric label="Scheduled appointments" value={String(report.appointments.scheduled)} />
+        <Metric label="Booked during this period" value={String(report.appointments.booked)} />
+        <Metric label={RECORDED_SALES_LABEL} value={formatPeso(report.sales.recordedSales)} />
       </div>
 
       <section className={panelPaddingClass()}>
         <h2 className="text-base font-semibold text-ink">Appointment status</h2>
-        <p className="mt-2 text-sm text-muted">
-          These {report.appointments.scheduled} scheduled appointments are each counted in one status.
-        </p>
         <ul className="mt-4 space-y-3">
           {APPOINTMENT_STATUSES.map((status) => {
             const count = statuses[status];
@@ -160,9 +139,6 @@ export function AnalyticsReportView({ report }: { report: AnalyticsReport }) {
 
       <section className={panelPaddingClass()}>
         <h2 className="text-base font-semibold text-ink">Appointment-based and walk-in visits</h2>
-        <p className="mt-2 text-sm text-muted">
-          These counts are appointments scheduled in the period, classified by the stored visit source. They are not unique customers.
-        </p>
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
           <div>
             <p className="text-sm font-semibold text-ink">Appointment-based visits</p>
@@ -179,10 +155,6 @@ export function AnalyticsReportView({ report }: { report: AnalyticsReport }) {
           <div className="bg-brand" style={{ width: visits === 0 ? "0%" : `${(report.appointments.sources.appointment / visits) * 100}%` }} />
           <div className="bg-accent" style={{ width: visits === 0 ? "0%" : `${(report.appointments.sources.walkIn / visits) * 100}%` }} />
         </div>
-        <p className="mt-4 text-sm text-muted">
-          {report.sales.counterBills} completed counter {report.sales.counterBills === 1 ? "bill has" : "bills have"} no client account
-          ({formatPeso(report.sales.counterRecordedSales)} recorded sales). Those bills are included in recorded sales and are not walk-in appointments.
-        </p>
       </section>
 
       <section className={panelPaddingClass()}>
@@ -205,14 +177,7 @@ export function AnalyticsReportView({ report }: { report: AnalyticsReport }) {
             <p className="mt-1 text-xl font-semibold text-ink">{formatPeso(report.sales.recordedSales)}</p>
           </div>
         </div>
-        <p className="mt-3 text-sm text-muted">
-          {report.sales.transactions} completed {report.sales.transactions === 1 ? "bill" : "bills"}. Open and voided bills are excluded.
-          Recorded sales are the stored bill total.
-        </p>
         <h3 className="mt-6 text-sm font-semibold text-ink">Recorded sales by day</h3>
-        <p className="mt-1 text-sm text-muted">
-          {report.sales.days.length} days are shown, including {quietDays} with no completed sales.
-        </p>
         <div className="mt-4 overflow-x-auto">
           <div className="flex h-40 min-w-full items-end gap-1" style={{ width: Math.max(report.sales.days.length * 12, 0) }}>
             {report.sales.days.map((day) => {
@@ -268,10 +233,6 @@ export function AnalyticsReportView({ report }: { report: AnalyticsReport }) {
 
       <section className={panelPaddingClass()}>
         <h2 className="text-base font-semibold text-ink">Services</h2>
-        <p className="mt-2 text-sm text-muted">
-          {report.services.bills} completed {report.services.bills === 1 ? "bill includes" : "bills include"} a service.
-          Each service counts once per bill. The amount is the sum of that service&apos;s stored line subtotals, using the name saved on the bill.
-        </p>
         {report.services.rows.length === 0 ? (
           <p className="mt-4 text-sm text-muted">No completed service bills in this period.</p>
         ) : (
@@ -296,12 +257,12 @@ export function AnalyticsReportView({ report }: { report: AnalyticsReport }) {
       <section className="space-y-4">
         <h2 className="text-base font-semibold text-ink">Loyalty</h2>
         <div className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          <Metric label="Net stamps earned" value={String(report.loyalty.stampsEarnedNet)} detail="Active earn events in this period. Reversed earns are excluded." />
-          <Metric label="Stamps reversed" value={String(report.loyalty.stampsReversed)} detail="Reversal events recorded in this period." />
-          <Metric label="Rewards unlocked" value={String(report.loyalty.rewardsUnlocked)} detail="Grants unlocked in this period, excluding grants that are currently revoked." />
-          <Metric label="Rewards revoked" value={String(report.loyalty.rewardsRevoked)} detail="Unlocked in this period and currently revoked. A separate revocation time is not stored." />
-          <Metric label="Rewards redeemed" value={String(report.loyalty.rewardsRedeemed)} detail="Applied redemptions. A grant or a hold on an open bill is not a redemption." />
-          <Metric label="Redemptions restored" value={String(report.loyalty.redemptionsRestored)} detail="Restored in the loyalty record. These are not counted as redeemed." />
+          <Metric label="Net stamps earned" value={String(report.loyalty.stampsEarnedNet)} />
+          <Metric label="Stamps reversed" value={String(report.loyalty.stampsReversed)} />
+          <Metric label="Rewards unlocked" value={String(report.loyalty.rewardsUnlocked)} />
+          <Metric label="Rewards revoked" value={String(report.loyalty.rewardsRevoked)} />
+          <Metric label="Rewards redeemed" value={String(report.loyalty.rewardsRedeemed)} />
+          <Metric label="Redemptions restored" value={String(report.loyalty.redemptionsRestored)} />
         </div>
       </section>
     </div>
@@ -313,10 +274,6 @@ export function InventoryAnalytics({ alerts }: { alerts: InventoryAlerts }) {
     <section className="mt-6 space-y-4">
       <div>
         <h2 className="text-base font-semibold text-ink">Current inventory alerts</h2>
-        <p className="mt-1 text-sm text-muted">
-          These figures are the stock on hand now. They do not follow the date filter. Expiring soon means within {alerts.warningDays} days.
-          An expired batch does not mark the whole product expired.
-        </p>
       </div>
       <div className="grid gap-4 lg:grid-cols-2">
         <StockTable

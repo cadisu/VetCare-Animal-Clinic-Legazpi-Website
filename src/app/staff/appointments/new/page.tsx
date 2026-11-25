@@ -29,10 +29,7 @@ export default async function StaffNewAppointmentPage({
       .limit(50);
     return (
       <>
-        <DashboardHeading
-          title="Walk-in or book on behalf"
-          subtitle="Select a client first (existing clients and pets only in Phase 3)."
-        />
+        <DashboardHeading title="Walk-in or book on behalf" />
         <ul className="mt-6 space-y-2">
           {(clients ?? []).map((c) => (
             <li key={c.id}>

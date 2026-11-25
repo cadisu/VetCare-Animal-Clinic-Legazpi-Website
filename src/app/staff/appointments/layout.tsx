@@ -10,10 +10,7 @@ export default async function StaffAppointmentsLayout({ children }: { children: 
   return (
     <>
       <div className="flex flex-wrap items-start justify-between gap-4">
-        <DashboardHeading
-          title="Appointments"
-          subtitle="Daily schedule and clinic-wide appointment history."
-        />
+        <DashboardHeading title="Appointments" />
         <div className="flex flex-wrap gap-2">
           <Link href="/staff/appointments/new" className={buttonClass("primary", "md")}>
             Walk-in / book

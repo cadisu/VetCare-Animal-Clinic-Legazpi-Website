@@ -12,7 +12,7 @@ export default async function ClientProfilePage() {
 
   return (
     <div className="mx-auto max-w-2xl">
-      <DashboardHeading title="My Profile" subtitle="Keep your contact details up to date." />
+      <DashboardHeading title="My Profile" />
 
       <section className={panelPaddingClass("mb-6")}>
         <dl className="grid gap-4 sm:grid-cols-3">

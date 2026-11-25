@@ -90,10 +90,7 @@ export default async function PosHomePage({
 
   return (
     <>
-      <DashboardHeading
-        title="Point of sale"
-        subtitle="Sell services and products. A customer and a visit are optional."
-      />
+      <DashboardHeading title="Point of sale" />
       <PosNotice notice={query.notice} error={query.error} />
       <PosSectionLinks current="pos" />
       <PosRegister

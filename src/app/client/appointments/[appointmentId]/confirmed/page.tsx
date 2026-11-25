@@ -42,10 +42,7 @@ export default async function ClientAppointmentConfirmedPage({
 
   return (
     <>
-      <DashboardHeading
-        title="You're booked"
-        subtitle="We received your appointment request. Review the details below."
-      />
+      <DashboardHeading title="You're booked" />
       <Alert variant="success">
         Your appointment has been saved. The clinic has acknowledged this booking.
       </Alert>

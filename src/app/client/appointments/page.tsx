@@ -20,7 +20,7 @@ export default async function ClientAppointmentsPage() {
   return (
     <>
       <div className="flex flex-wrap items-start justify-between gap-4">
-        <DashboardHeading title="My Appointments" subtitle="Upcoming visits and your booking history." />
+        <DashboardHeading title="My Appointments" />
         <Link href="/client/appointments/new" className={buttonClass("primary", "md")}>
           Book appointment
         </Link>

@@ -45,7 +45,6 @@ export function InventoryAlertCard({ alerts }: { alerts: InventoryAlerts }) {
           Open inventory
         </Link>
       </div>
-      <p className="mt-2 text-sm text-muted">Expiring soon means within {alerts.warningDays} days.</p>
       <ul className="mt-4 space-y-3">
         {rows.map((row) => (
           <li key={row.label}>

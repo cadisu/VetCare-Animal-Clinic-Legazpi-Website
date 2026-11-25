@@ -62,10 +62,7 @@ export default async function SeniorVetDashboardPage() {
 
   return (
     <>
-      <DashboardHeading
-        title={`Welcome, ${firstName}!`}
-        subtitle="Today's visits and what is coming up next."
-      />
+      <DashboardHeading title={`Welcome, ${firstName}!`} />
 
       {loadError && (
         <p className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
@@ -118,10 +115,7 @@ export default async function SeniorVetDashboardPage() {
 
         <section className={panelPaddingClass()}>
           <div className="flex items-start justify-between gap-3">
-            <div>
-              <h2 className="text-base font-semibold text-ink">Upcoming appointments</h2>
-              <p className="mt-1 text-sm text-muted">Visits after today for every veterinarian, nearest first.</p>
-            </div>
+            <h2 className="text-base font-semibold text-ink">Upcoming appointments</h2>
             <Link
               href="/senior-vet/appointments/future"
               className="text-sm font-semibold text-brand hover:underline"
@@ -185,13 +179,11 @@ export default async function SeniorVetDashboardPage() {
           </section>
           <Link href="/staff/analytics" className={panelPaddingClass("block transition-colors hover:border-brand/40 hover:bg-highlight/80")}>
             <h2 className="text-base font-semibold text-ink">Revenue</h2>
-            <p className="mt-3 text-sm text-muted">Gross sales, rewards applied, and recorded sales for the clinic.</p>
             <p className="mt-4 text-sm font-semibold text-brand">Open analytics →</p>
           </Link>
           <InventoryAlertCard alerts={alerts} />
           <Link href="/staff/analytics" className={panelPaddingClass("block transition-colors hover:border-brand/40 hover:bg-highlight/80")}>
             <h2 className="text-base font-semibold text-ink">Analytics</h2>
-            <p className="mt-3 text-sm text-muted">Appointments, services, loyalty, and current inventory alerts.</p>
             <p className="mt-4 text-sm font-semibold text-brand">Open analytics →</p>
           </Link>
           <section className={panelPaddingClass()}>
@@ -225,9 +217,6 @@ export default async function SeniorVetDashboardPage() {
           </section>
           <section className={panelPaddingClass()}>
             <h2 className="text-base font-semibold text-ink">Clinical Records</h2>
-            <p className="mt-3 text-sm text-muted">
-              Official clinical notes, vaccinations, and weight history are kept on each pet.
-            </p>
             <Link href="/staff/clients" className="mt-4 inline-block text-sm font-semibold text-brand hover:underline">
               Open client and pet records
             </Link>

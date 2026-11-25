@@ -45,7 +45,7 @@ export default async function StaffSlotsPage({
 
   return (
     <>
-      <DashboardHeading title="Slot management" subtitle="Block times or adjust capacity (Senior Vet only)." />
+      <DashboardHeading title="Slot management" />
       <form method="get" className="mt-4 flex items-end gap-3">
         <FormField label="Date" name="day" type="date" defaultValue={day} />
         <button type="submit" className={buttonClass("secondary", "md")}>

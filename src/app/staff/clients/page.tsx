@@ -64,7 +64,7 @@ export default async function StaffClientsPage({
 
   return (
     <>
-      <DashboardHeading title="Clients" subtitle="Search clients and view their pets." />
+      <DashboardHeading title="Clients" />
 
       <form role="search" className="mb-6 flex flex-col gap-3 sm:flex-row" action="/staff/clients">
         <label htmlFor="q" className="sr-only">

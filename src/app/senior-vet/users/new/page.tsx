@@ -11,10 +11,7 @@ export default async function NewPrivilegedUserPage() {
 
   return (
     <>
-      <DashboardHeading
-        title="New staff account"
-        subtitle="Staff and Senior Vet accounts are created here. Public registration still creates client accounts only."
-      />
+      <DashboardHeading title="New staff account" />
       <section className={panelPaddingClass("max-w-3xl")}>
         <CreatePrivilegedUserForm />
       </section>

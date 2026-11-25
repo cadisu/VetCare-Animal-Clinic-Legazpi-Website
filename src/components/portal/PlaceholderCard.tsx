@@ -21,11 +21,11 @@ export function PlaceholderCard({
   );
 }
 
-export function DashboardHeading({ title, subtitle }: { title: string; subtitle: string }) {
+export function DashboardHeading({ title, subtitle }: { title: string; subtitle?: string }) {
   return (
     <div className="mb-8">
       <h1 className="text-2xl font-bold tracking-tight text-ink sm:text-3xl">{title}</h1>
-      <p className="mt-2 text-muted">{subtitle}</p>
+      {subtitle ? <p className="mt-2 text-muted">{subtitle}</p> : null}
     </div>
   );
 }

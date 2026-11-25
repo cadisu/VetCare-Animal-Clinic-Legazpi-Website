@@ -13,10 +13,7 @@ export default async function StaffChangePasswordPage() {
 
   return (
     <div className="mx-auto max-w-xl">
-      <DashboardHeading
-        title="Change Password"
-        subtitle="Confirm your current password, then choose a new one."
-      />
+      <DashboardHeading title="Change Password" />
       <section className={panelPaddingClass("sm:p-8")}>
         <ChangePasswordForm />
       </section>

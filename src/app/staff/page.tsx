@@ -44,10 +44,7 @@ export default async function StaffDashboardPage({
 
   return (
     <>
-      <DashboardHeading
-        title={`Welcome, ${firstName}!`}
-        subtitle="Today's clinic operations at a glance."
-      />
+      <DashboardHeading title={`Welcome, ${firstName}!`} />
       <AppointmentStatusNotice notice={query.notice} statusError={query.statusError} />
       <FlashNotice flash={query.flash} flashError={query.flashError} />
       <div className="space-y-6">
@@ -87,10 +84,7 @@ export default async function StaffDashboardPage({
         </section>
         <section className={panelPaddingClass()}>
           <div className="flex items-start justify-between gap-3">
-            <div>
-              <h2 className="text-base font-semibold text-ink">Upcoming appointments</h2>
-              <p className="mt-1 text-sm text-muted">Visits after today for every veterinarian, nearest first.</p>
-            </div>
+            <h2 className="text-base font-semibold text-ink">Upcoming appointments</h2>
             <Link href="/staff/appointments/upcoming" className="text-sm font-semibold text-brand hover:underline">
               View all
             </Link>
@@ -124,7 +118,6 @@ export default async function StaffDashboardPage({
         <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
         <section className={panelPaddingClass()}>
           <h2 className="text-base font-semibold text-ink">Walk-ins today ({walkIns.length})</h2>
-          <p className="mt-2 text-sm text-muted">Register walk-ins for existing clients and pets.</p>
           <Link href="/staff/appointments/new?source=WALK_IN" className={buttonClass("primary", "md", "mt-4 inline-flex")}>
             New walk-in
           </Link>
@@ -134,7 +127,6 @@ export default async function StaffDashboardPage({
           className={panelClass("p-6 transition-colors hover:border-brand/40 hover:bg-highlight/80")}
         >
           <h2 className="text-base font-semibold text-ink">Clients</h2>
-          <p className="mt-3 text-sm text-muted">Search clients and view their pets.</p>
           <p className="mt-4 text-sm font-semibold text-brand">Open clients →</p>
         </Link>
         <Link
@@ -142,9 +134,6 @@ export default async function StaffDashboardPage({
           className={panelClass("p-6 transition-colors hover:border-brand/40 hover:bg-highlight/80")}
         >
           <h2 className="text-base font-semibold text-ink">POS</h2>
-          <p className="mt-3 text-sm text-muted">
-            Record services, products, and the amount paid at the counter.
-          </p>
           <p className="mt-4 text-sm font-semibold text-brand">Open POS →</p>
         </Link>
         <InventoryAlertCard alerts={alerts} />
@@ -153,9 +142,6 @@ export default async function StaffDashboardPage({
           className={panelClass("p-6 transition-colors hover:border-brand/40 hover:bg-highlight/80")}
         >
           <h2 className="text-base font-semibold text-ink">Analytics</h2>
-          <p className="mt-3 text-sm text-muted">
-            Customers, appointments, sales, services, loyalty, and current inventory alerts.
-          </p>
           <p className="mt-4 text-sm font-semibold text-brand">Open analytics →</p>
         </Link>
         </div>

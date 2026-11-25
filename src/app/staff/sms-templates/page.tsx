@@ -27,10 +27,7 @@ export default async function SmsTemplatesPage({
 
   return (
     <>
-      <DashboardHeading
-        title="SMS templates"
-        subtitle="Edit the appointment reminder and the message sent when a visit is rescheduled. Saving does not rewrite messages that were already created."
-      />
+      <DashboardHeading title="SMS templates" />
       <FlashNotice flash={query.flash} flashError={query.flashError} />
       <div className="mt-6 grid gap-6 md:grid-cols-2">
         <section className={panelClass("p-6")}>

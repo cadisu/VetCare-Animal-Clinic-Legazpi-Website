@@ -31,10 +31,7 @@ export async function ClinicSchedulePanel() {
 
   return (
     <>
-      <DashboardHeading
-        title="Schedule configuration"
-        subtitle="Publish slots, block dates, and review clinic hours (edit hours via database for now)."
-      />
+      <DashboardHeading title="Schedule configuration" />
 
       <section className={panelPaddingClass("mt-8")}>
         <h2 className="text-base font-semibold">Publish / generate slots</h2>
