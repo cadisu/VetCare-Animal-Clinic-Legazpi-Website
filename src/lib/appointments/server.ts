@@ -1,5 +1,6 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { expireUnconfirmedAppointments } from "@/lib/appointments/expire";
 import { todayIso } from "@/lib/dates";
 import { isIsoDate } from "@/lib/dates";
 import {
@@ -79,6 +80,7 @@ export async function listAppointmentsForClient(
   supabase: SupabaseClient,
   clientId: string,
 ): Promise<AppointmentListRow[]> {
+  await expireUnconfirmedAppointments(supabase);
   const { data } = await supabase
     .from("appointments")
     .select(APPOINTMENT_LIST_SELECT)
@@ -176,6 +178,7 @@ export async function listUpcomingAppointmentsForVeterinarianProfile(
   supabase: SupabaseClient,
   profileId: string,
 ): Promise<AppointmentListRowWithClient[]> {
+  await expireUnconfirmedAppointments(supabase);
   const veterinarianId = await getVeterinarianIdForProfile(supabase, profileId);
   if (!veterinarianId) return [];
 
@@ -194,6 +197,7 @@ export async function listAppointmentsForDay(
   day: string,
   filters?: { q?: string; source?: string },
 ): Promise<(AppointmentListRow & { client?: { full_name: string } })[]> {
+  await expireUnconfirmedAppointments(supabase);
   const { data: slots } = await supabase
     .from("appointment_slots")
     .select("id")
@@ -229,6 +233,7 @@ export async function getAppointmentById(
   supabase: SupabaseClient,
   appointmentId: string,
 ): Promise<AppointmentListRow | null> {
+  await expireUnconfirmedAppointments(supabase);
   const { data } = await supabase
     .from("appointments")
     .select(APPOINTMENT_LIST_SELECT)
@@ -241,6 +246,7 @@ export async function getAppointmentByIdWithClient(
   supabase: SupabaseClient,
   appointmentId: string,
 ): Promise<(AppointmentListRow & { client?: { full_name: string } }) | null> {
+  await expireUnconfirmedAppointments(supabase);
   const { data } = await supabase
     .from("appointments")
     .select(`${APPOINTMENT_LIST_SELECT}, client:profiles!appointments_client_id_fkey ( full_name )`)
@@ -253,6 +259,7 @@ export async function listAppointmentsForPet(
   supabase: SupabaseClient,
   petId: string,
 ): Promise<AppointmentListRow[]> {
+  await expireUnconfirmedAppointments(supabase);
   const { data } = await supabase
     .from("appointments")
     .select(APPOINTMENT_LIST_SELECT)
@@ -300,6 +307,7 @@ export async function listFutureClinicAppointments(
   supabase: SupabaseClient,
   options?: { limit?: number },
 ): Promise<AppointmentListRowWithClient[]> {
+  await expireUnconfirmedAppointments(supabase);
   const today = todayIso();
   const { ids } = await collectSlotIds((from, to) =>
     supabase
@@ -358,6 +366,7 @@ export async function listAppointmentLog(
   supabase: SupabaseClient,
   filters: AppointmentLogFilters,
 ): Promise<AppointmentLogResult> {
+  await expireUnconfirmedAppointments(supabase);
   const page = filters.page && filters.page > 0 ? Math.floor(filters.page) : 1;
   const status = parseLogStatus(filters.status);
   const q = filters.q?.trim().slice(0, 80) ?? "";

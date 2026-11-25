@@ -21,7 +21,10 @@ import { batchExpiryStatus, stockLevel } from "@/lib/inventory/status";
 import { lineSubtotal } from "@/lib/pos/money";
 
 const root = process.cwd();
-const migration = readFileSync(path.join(root, "supabase/migrations/20261029000000_phase10_analytics.sql"), "utf8");
+const migration = readFileSync(
+  path.join(root, "supabase/migrations/20261125130100_expire_unconfirmed_appointments.sql"),
+  "utf8",
+);
 const page = readFileSync(path.join(root, "src/app/staff/analytics/page.tsx"), "utf8");
 const view = readFileSync(path.join(root, "src/components/analytics/AnalyticsReport.tsx"), "utf8");
 const staffNav = readFileSync(path.join(root, "src/components/staff/nav.ts"), "utf8");
@@ -76,10 +79,11 @@ describe("phase 10 analytics report", () => {
       COMPLETED: 3,
       CANCELLED: 1,
       NO_SHOW: 1,
+      EXPIRED: 1,
     } satisfies Record<AppointmentStatus, number>;
-    expect(appointmentStatusTotal(counts)).toBe(9);
+    expect(appointmentStatusTotal(counts)).toBe(10);
     counts.CONFIRMED = 4;
-    expect(appointmentStatusTotal(counts)).toBe(11);
+    expect(appointmentStatusTotal(counts)).toBe(12);
   });
 
   it("classifies walk-in appointments separately from counter bills", () => {

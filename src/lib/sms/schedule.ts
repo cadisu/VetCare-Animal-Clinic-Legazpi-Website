@@ -5,6 +5,9 @@ export const CLINIC_TIME_ZONE = "Asia/Manila";
 /** 09:00 Asia/Manila is 01:00 UTC. The Philippines does not observe daylight saving. */
 export const REMINDER_CRON_UTC = "0 1 * * *";
 
+/** Midnight Asia/Manila is 16:00 UTC. */
+export const EXPIRE_CRON_UTC = "0 16 * * *";
+
 export function manilaDateIso(now: Date): string {
   return new Intl.DateTimeFormat("en-CA", {
     timeZone: CLINIC_TIME_ZONE,

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { AppointmentCard } from "@/components/appointments/AppointmentCard";
-import { DashboardHeading, PlaceholderCard } from "@/components/portal/PlaceholderCard";
+import { DashboardHeading } from "@/components/portal/PlaceholderCard";
 import { InventoryAlertCard } from "@/components/inventory/InventoryAlertCard";
 import { panelPaddingClass } from "@/components/ui/panel-styles";
 import { CLIENT_UPCOMING_PREVIEW_LIMIT } from "@/lib/appointments/constants";
@@ -25,6 +25,7 @@ export default async function SeniorVetDashboardPage() {
   const supabase = await createClient();
   const alerts = await listInventoryAlerts(supabase);
 
+  let clinicToday: Awaited<ReturnType<typeof listAppointmentsForDay>> = [];
   let todayAppointments: Awaited<ReturnType<typeof listAppointmentsForDay>> = [];
   let futureAppointments: Awaited<ReturnType<typeof listFutureClinicAppointments>> = [];
   let veterinarianId: string | null = null;
@@ -36,6 +37,7 @@ export default async function SeniorVetDashboardPage() {
       getVeterinarianIdForProfile(supabase, profile.id),
     ]);
     veterinarianId = linkedVetId;
+    clinicToday = dayRows;
     todayAppointments = filterAppointmentsForVeterinarian(dayRows, linkedVetId);
     futureAppointments = futureRows;
   } catch {
@@ -44,6 +46,19 @@ export default async function SeniorVetDashboardPage() {
 
   const todayPreview = todayAppointments.slice(0, CLIENT_UPCOMING_PREVIEW_LIMIT);
   const futurePreview = futureAppointments.slice(0, CLIENT_UPCOMING_PREVIEW_LIMIT);
+  const waitingForConfirmation = clinicToday.filter((appointment) => appointment.status === "PENDING").length;
+  const walkInsToday = clinicToday.filter((appointment) => appointment.source === "WALK_IN").length;
+
+  const [activeClients, activeStaff, inactiveAccounts] = await Promise.all([
+    supabase.from("profiles").select("id", { count: "exact", head: true }).eq("role", "CLIENT").eq("status", "ACTIVE"),
+    supabase
+      .from("profiles")
+      .select("id", { count: "exact", head: true })
+      .in("role", ["STAFF", "SENIOR_VET"])
+      .eq("status", "ACTIVE"),
+    supabase.from("profiles").select("id", { count: "exact", head: true }).eq("status", "INACTIVE"),
+  ]);
+  const accountCountsFailed = Boolean(activeClients.error || activeStaff.error || inactiveAccounts.error);
 
   return (
     <>
@@ -142,10 +157,32 @@ export default async function SeniorVetDashboardPage() {
         </section>
 
         <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-          <PlaceholderCard
-            title="Clinic Overview"
-            description="A summary of clinic activity will appear here."
-          />
+          <section className={panelPaddingClass()}>
+            <div className="flex items-start justify-between gap-3">
+              <h2 className="text-base font-semibold text-ink">Clinic Overview</h2>
+              <Link href="/senior-vet/appointments" className="text-sm font-semibold text-brand hover:underline">
+                Today&apos;s appointments
+              </Link>
+            </div>
+            {loadError ? (
+              <p className="mt-3 text-sm text-muted">Today&apos;s clinic counts could not be loaded.</p>
+            ) : (
+              <dl className="mt-4 space-y-3 text-sm">
+                <div className="flex items-center justify-between gap-3">
+                  <dt className="text-muted">Visits scheduled today</dt>
+                  <dd className="font-semibold text-ink">{clinicToday.length}</dd>
+                </div>
+                <div className="flex items-center justify-between gap-3">
+                  <dt className="text-muted">Still waiting for confirmation</dt>
+                  <dd className="font-semibold text-ink">{waitingForConfirmation}</dd>
+                </div>
+                <div className="flex items-center justify-between gap-3">
+                  <dt className="text-muted">Walk-ins today</dt>
+                  <dd className="font-semibold text-ink">{walkInsToday}</dd>
+                </div>
+              </dl>
+            )}
+          </section>
           <Link href="/staff/analytics" className={panelPaddingClass("block transition-colors hover:border-brand/40 hover:bg-highlight/80")}>
             <h2 className="text-base font-semibold text-ink">Revenue</h2>
             <p className="mt-3 text-sm text-muted">Gross sales, rewards applied, and recorded sales for the clinic.</p>
@@ -157,7 +194,35 @@ export default async function SeniorVetDashboardPage() {
             <p className="mt-3 text-sm text-muted">Appointments, services, loyalty, and current inventory alerts.</p>
             <p className="mt-4 text-sm font-semibold text-brand">Open analytics →</p>
           </Link>
-          <PlaceholderCard title="User Management" description="Manage client and staff accounts here." />
+          <section className={panelPaddingClass()}>
+            <div className="flex items-start justify-between gap-3">
+              <h2 className="text-base font-semibold text-ink">User Management</h2>
+              <Link href="/senior-vet/users" className="text-sm font-semibold text-brand hover:underline">
+                Open users
+              </Link>
+            </div>
+            {accountCountsFailed ? (
+              <p className="mt-3 text-sm text-muted">Account counts could not be loaded.</p>
+            ) : (
+              <dl className="mt-4 space-y-3 text-sm">
+                <div className="flex items-center justify-between gap-3">
+                  <dt className="text-muted">Active clients</dt>
+                  <dd className="font-semibold text-ink">{activeClients.count ?? 0}</dd>
+                </div>
+                <div className="flex items-center justify-between gap-3">
+                  <dt className="text-muted">Active staff and senior vets</dt>
+                  <dd className="font-semibold text-ink">{activeStaff.count ?? 0}</dd>
+                </div>
+                <div className="flex items-center justify-between gap-3">
+                  <dt className="text-muted">Inactive accounts</dt>
+                  <dd className="font-semibold text-ink">{inactiveAccounts.count ?? 0}</dd>
+                </div>
+              </dl>
+            )}
+            <Link href="/senior-vet/users/new" className="mt-4 inline-block text-sm font-semibold text-brand hover:underline">
+              New staff account
+            </Link>
+          </section>
           <section className={panelPaddingClass()}>
             <h2 className="text-base font-semibold text-ink">Clinical Records</h2>
             <p className="mt-3 text-sm text-muted">

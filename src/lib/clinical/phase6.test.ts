@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { groupRevisions } from "@/lib/clinical/constants";
-import { clinicalRecordSchema, clinicalReturnPath, vaccinationSchema, weightSchema } from "@/lib/validation/clinical";
+import { clinicalRecordSchema, clinicalReturnPath, parseConsultationWeight, vaccinationSchema, weightSchema } from "@/lib/validation/clinical";
 
 const migration = readFileSync(
   path.join(process.cwd(), "supabase/migrations/20261018000000_phase6_clinical_records.sql"),
@@ -76,6 +76,9 @@ describe("clinical validation", () => {
     expect(weightSchema.safeParse({ petId, appointmentId: "", weightKg: "4.25" }).success).toBe(true);
     const low = weightSchema.safeParse({ petId, appointmentId: "", weightKg: "0" });
     expect(low.success).toBe(false);
+    expect(parseConsultationWeight("")).toEqual({ ok: true, kg: null });
+    expect(parseConsultationWeight("12.5")).toEqual({ ok: true, kg: 12.5 });
+    expect(parseConsultationWeight("0").ok).toBe(false);
   });
 
   it("requires the clinical fields a senior vet records", () => {

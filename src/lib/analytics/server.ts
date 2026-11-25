@@ -1,5 +1,6 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { expireUnconfirmedAppointments } from "@/lib/appointments/expire";
 import { APPOINTMENT_STATUSES, type AppointmentStatus } from "@/lib/appointments/constants";
 import { appointmentStatusTotal, zeroFillSalesDays, type SalesDay } from "@/lib/analytics/metrics";
 
@@ -160,6 +161,7 @@ export async function loadClinicAnalytics(
   from: string,
   to: string,
 ): Promise<{ ok: true; report: AnalyticsReport } | { ok: false; message: string }> {
+  await expireUnconfirmedAppointments(supabase);
   const { data, error } = await supabase.rpc("clinic_analytics_report", { p_from: from, p_to: to });
   if (error || !data || typeof data !== "object") {
     return { ok: false, message: "Analytics could not be loaded." };

@@ -11,6 +11,7 @@ export const APPOINTMENT_STATUSES = [
   "COMPLETED",
   "CANCELLED",
   "NO_SHOW",
+  "EXPIRED",
 ] as const;
 export type AppointmentStatus = (typeof APPOINTMENT_STATUSES)[number];
 
@@ -37,6 +38,7 @@ export const STATUS_LABELS: Record<AppointmentStatus, string> = {
   COMPLETED: "Completed",
   CANCELLED: "Cancelled",
   NO_SHOW: "No Show",
+  EXPIRED: "Expired",
 };
 
 export function isAppointmentStatus(status: string): status is AppointmentStatus {
@@ -114,7 +116,7 @@ export function appointmentSlotStartMs(slotDate: string, startTime: string): num
   return new Date(`${slotDate}T${startTime.slice(0, 5)}:00+08:00`).getTime();
 }
 
-const TERMINAL_STATUSES: AppointmentStatus[] = ["CANCELLED", "COMPLETED", "NO_SHOW"];
+const TERMINAL_STATUSES: AppointmentStatus[] = ["CANCELLED", "COMPLETED", "NO_SHOW", "EXPIRED"];
 
 /** Client upcoming list: exclude terminal statuses and past slot starts. */
 export function isClientUpcomingAppointment(
@@ -156,7 +158,7 @@ const RECORDABLE_FOR_SCHEDULE = new Set<AppointmentStatus>(["CHECKED_IN", "IN_CO
 export type ScheduleRecordMark = "pending" | "recorded" | "closed";
 
 export function scheduleRecordMark(status: AppointmentStatus, hasRecord: boolean): ScheduleRecordMark | null {
-  if (status === "CANCELLED" || status === "NO_SHOW") return "closed";
+  if (status === "CANCELLED" || status === "NO_SHOW" || status === "EXPIRED") return "closed";
   if (hasRecord) return "recorded";
   if (RECORDABLE_FOR_SCHEDULE.has(status)) return "pending";
   return null;

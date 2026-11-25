@@ -45,6 +45,7 @@ const STAFF_ACTIONS: Record<AppointmentStatus, readonly AppointmentStatusAction[
   COMPLETED: [],
   CANCELLED: [],
   NO_SHOW: [],
+  EXPIRED: [],
 };
 
 const CLIENT_ACTIONS: Record<AppointmentStatus, readonly AppointmentStatusAction[]> = {
@@ -55,6 +56,7 @@ const CLIENT_ACTIONS: Record<AppointmentStatus, readonly AppointmentStatusAction
   COMPLETED: [],
   CANCELLED: [],
   NO_SHOW: [],
+  EXPIRED: [],
 };
 
 export function appointmentStatusActions(
@@ -119,6 +121,7 @@ export const APPOINTMENT_STATUS_ERRORS: Record<string, string> = {
   not_found: "Appointment not found.",
   generic: "Something went wrong. Please try again.",
   missing_price: "Set a price for this service before adding it.",
+  weight: "Enter a weight between 0.01 and 200 kg.",
 };
 
 const NOTICE_CODE_BY_STATUS: Partial<Record<AppointmentStatus, string>> = {

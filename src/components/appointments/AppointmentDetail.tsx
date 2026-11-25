@@ -169,6 +169,7 @@ export async function AppointmentDetail({
             status={appointment.status}
             slotDate={slot.slot_date}
             returnTo={detailPath}
+            petName={appointment.pet.name}
           />
           {canChange && !messages.some((message) =>
             message.message_type === "APPOINTMENT_REMINDER" &&

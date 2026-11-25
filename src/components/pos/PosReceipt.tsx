@@ -1,7 +1,11 @@
+"use client";
+
+import { useState } from "react";
 import Link from "next/link";
 import { voidPosAction } from "@/app/actions/pos";
 import { PosEditForm } from "@/components/pos/PosEditForm";
 import { ConfirmSubmitButton } from "@/components/ui/ConfirmSubmitButton";
+import { Dialog } from "@/components/ui/Dialog";
 import { buttonClass } from "@/components/ui/button-styles";
 import { panelPaddingClass } from "@/components/ui/panel-styles";
 import { formatClinicDateTime, formatPeso } from "@/lib/pos/money";
@@ -21,8 +25,12 @@ export function PosReceipt({
   products: SellableProduct[];
   canEditCompleted: boolean;
 }) {
+  const [editOpen, setEditOpen] = useState(false);
+  const [voidOpen, setVoidOpen] = useState(false);
+  const completed = bill.status === "COMPLETED";
+
   return (
-    <div className="space-y-6">
+    <>
       <section className={panelPaddingClass()}>
         <p className="text-xs font-semibold uppercase tracking-wide text-muted">{bill.reference}</p>
         <h1 className="mt-1 text-2xl font-bold text-ink">{bill.client_name}</h1>
@@ -66,7 +74,7 @@ export function PosReceipt({
             </>
           )}
         </dl>
-        {bill.status === "COMPLETED" && (
+        {completed && (
           <p className="mt-3 text-sm text-muted">
             Paid at the counter {formatClinicDateTime(bill.completed_at)}
             {bill.processor_name ? ` · recorded by ${bill.processor_name}` : ""}.
@@ -78,58 +86,64 @@ export function PosReceipt({
             {bill.voided_by_name ? ` by ${bill.voided_by_name}` : ""}. Reason: {bill.void_reason}
           </p>
         )}
-        <Link href="/staff/pos" className={buttonClass("primary", "md", "mt-4")}>
-          New sale
-        </Link>
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+          <Link href="/staff/pos" className={buttonClass("primary", "md")}>
+            New sale
+          </Link>
+          {completed && (
+            <div className="flex flex-wrap gap-2">
+              {canEditCompleted && (
+                <button type="button" className={buttonClass("outline", "md")} onClick={() => setEditOpen(true)}>
+                  Edit
+                </button>
+              )}
+              <button type="button" className={buttonClass("outline", "md")} onClick={() => setVoidOpen(true)}>
+                Void
+              </button>
+            </div>
+          )}
+        </div>
       </section>
 
-      {edits.length > 0 && (
-        <section className={panelPaddingClass()}>
-          <h2 className="text-base font-semibold text-ink">Edit history</h2>
-          <ul className="mt-3 space-y-3 text-sm">
-            {edits.map((edit) => (
-              <li key={edit.id}>
-                <p className="font-medium text-ink">{formatClinicDateTime(edit.created_at)}</p>
-                <p className="text-muted">
-                  {edit.editor_name ?? "Senior Vet"} · previous total {formatPeso(edit.previous_total)}
-                </p>
-                <p>{edit.reason}</p>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
-
-      {bill.status === "COMPLETED" && canEditCompleted && (
-        <section className={panelPaddingClass()}>
-          <h2 className="text-base font-semibold text-ink">Edit this bill</h2>
-          <p className="mt-2 text-sm text-muted">
+      {canEditCompleted && (
+        <Dialog open={editOpen} title="Edit this bill" onClose={() => setEditOpen(false)}>
+          <p className="text-sm text-muted">
             Existing line prices stay as they were when the bill was paid. The new total must equal the amount already paid.
           </p>
+          {edits.length > 0 && (
+            <ul className="mt-4 space-y-3 border-b border-line pb-4 text-sm">
+              {edits.map((edit) => (
+                <li key={edit.id}>
+                  <p className="font-medium text-ink">{formatClinicDateTime(edit.created_at)}</p>
+                  <p className="text-muted">
+                    {edit.editor_name ?? "Senior Vet"} · previous total {formatPeso(edit.previous_total)}
+                  </p>
+                  <p>{edit.reason}</p>
+                </li>
+              ))}
+            </ul>
+          )}
           <PosEditForm bill={bill} services={services} products={products} />
-        </section>
+        </Dialog>
       )}
 
-      {bill.status === "COMPLETED" && (
-        <section className={panelPaddingClass()}>
-          <h2 className="text-base font-semibold text-ink">Void this bill</h2>
-          {canEditCompleted ? (
-            <form action={voidPosAction} className="mt-4 space-y-3">
-              <input type="hidden" name="transactionId" value={bill.id} />
-              <label htmlFor="void-reason" className="text-sm font-medium text-ink">Reason</label>
-              <textarea id="void-reason" name="reason" required minLength={3} maxLength={500} rows={3} className="block min-h-11 w-full rounded-lg border border-line px-3 py-2 text-sm" />
-              <ConfirmSubmitButton
-                confirmMessage="Void this completed bill and restore any product stock? The visit status will stay as it is."
-                pendingText="Voiding..."
-              >
-                Void completed bill
-              </ConfirmSubmitButton>
-            </form>
-          ) : (
-            <p className="mt-2 text-sm text-muted">A Senior Vet can void this completed bill if it needs a correction.</p>
-          )}
-        </section>
-      )}
-    </div>
+      <Dialog open={voidOpen} title="Void this bill" onClose={() => setVoidOpen(false)}>
+        {canEditCompleted ? (
+          <form action={voidPosAction} className="space-y-3">
+            <input type="hidden" name="transactionId" value={bill.id} />
+            <label htmlFor="void-reason" className="text-sm font-medium text-ink">Reason</label>
+            <textarea id="void-reason" name="reason" required minLength={3} maxLength={500} rows={3} className="block min-h-11 w-full rounded-lg border border-line px-3 py-2 text-sm" />
+            <ConfirmSubmitButton
+              confirmMessage="Void this completed bill and restore any product stock? The visit status will stay as it is."
+              pendingText="Voiding..."
+            >
+              Void completed bill
+            </ConfirmSubmitButton>
+          </form>
+        ) : (
+          <p className="text-sm text-muted">A Senior Vet can void this completed bill if it needs a correction.</p>
+        )}
+      </Dialog>
+    </>
   );
 }

@@ -118,6 +118,7 @@ export function AppointmentCard({
           slotDate={slot.slot_date}
           day={staffDay}
           returnTo={returnTo}
+          petName={appointment.pet.name}
         />
       )}
     </div>

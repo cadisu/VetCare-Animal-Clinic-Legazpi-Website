@@ -1,5 +1,6 @@
 import { SeniorVetShell } from "@/components/senior-vet/SeniorVetShell";
 import { StaffShell } from "@/components/staff/StaffShell";
+import { expireUnconfirmedAppointments } from "@/lib/appointments/expire";
 import { requireRole } from "@/lib/auth/session";
 import { getOwnAvatarUrl } from "@/lib/profile/avatar";
 import { createClient } from "@/lib/supabase/server";
@@ -9,6 +10,7 @@ import { createClient } from "@/lib/supabase/server";
 export default async function StaffLayout({ children }: { children: React.ReactNode }) {
   const profile = await requireRole(["STAFF", "SENIOR_VET"]);
   const supabase = await createClient();
+  await expireUnconfirmedAppointments(supabase);
   const avatarUrl = await getOwnAvatarUrl(supabase, profile.id);
   const shellProfile = {
     fullName: profile.full_name,

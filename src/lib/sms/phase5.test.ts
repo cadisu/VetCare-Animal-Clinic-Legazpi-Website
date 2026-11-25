@@ -16,7 +16,7 @@ import {
   smsStatusLabel,
   webhookEffect,
 } from "@/lib/sms/provider";
-import { isReminderEligibleStatus, manilaDateIso, nextManilaDateIso, REMINDER_CRON_UTC } from "@/lib/sms/schedule";
+import { EXPIRE_CRON_UTC, isReminderEligibleStatus, manilaDateIso, nextManilaDateIso, REMINDER_CRON_UTC } from "@/lib/sms/schedule";
 import {
   DEFAULT_REMINDER_TEMPLATE,
   DEFAULT_RESCHEDULE_TEMPLATE,
@@ -66,6 +66,7 @@ const now = new Date("2026-10-16T01:00:00.000Z");
 describe("Philippine reminder schedule", () => {
   it("uses 01:00 UTC for 09:00 in Manila", () => {
     expect(REMINDER_CRON_UTC).toBe("0 1 * * *");
+    expect(EXPIRE_CRON_UTC).toBe("0 16 * * *");
     expect(manilaDateIso(now)).toBe("2026-10-16");
     expect(nextManilaDateIso(now)).toBe("2026-10-17");
   });
@@ -80,7 +81,7 @@ describe("reminder eligibility", () => {
   it("includes pending and confirmed visits only", () => {
     expect(isReminderEligibleStatus("PENDING")).toBe(true);
     expect(isReminderEligibleStatus("CONFIRMED")).toBe(true);
-    for (const status of ["CANCELLED", "COMPLETED", "NO_SHOW", "CHECKED_IN", "IN_CONSULTATION"]) {
+    for (const status of ["CANCELLED", "COMPLETED", "NO_SHOW", "CHECKED_IN", "IN_CONSULTATION", "EXPIRED"]) {
       expect(isReminderEligibleStatus(status)).toBe(false);
     }
   });
@@ -453,7 +454,7 @@ describe("rescheduling rules", () => {
   it("allows only pending and confirmed appointments", () => {
     expect(canRescheduleAppointment("PENDING")).toBe(true);
     expect(canRescheduleAppointment("CONFIRMED")).toBe(true);
-    for (const status of ["COMPLETED", "CANCELLED", "NO_SHOW", "CHECKED_IN", "IN_CONSULTATION"]) {
+    for (const status of ["COMPLETED", "CANCELLED", "NO_SHOW", "CHECKED_IN", "IN_CONSULTATION", "EXPIRED"]) {
       expect(canRescheduleAppointment(status)).toBe(false);
     }
   });

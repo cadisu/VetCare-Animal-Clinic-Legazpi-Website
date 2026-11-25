@@ -26,12 +26,23 @@ const weightText = z
   .transform(Number)
   .refine((value) => value >= 0.01 && value <= 200, "Enter a weight between 0.01 and 200 kg.");
 
-const optionalWeight = z
+export const optionalWeight = z
   .string()
   .trim()
   .refine((value) => value === "" || /^\d+(\.\d{1,2})?$/.test(value), "Enter a weight in kilograms.")
   .transform((value) => (value === "" ? null : Number(value)))
   .refine((value) => value === null || (value >= 0.01 && value <= 200), "Enter a weight between 0.01 and 200 kg.");
+
+/** Empty means the consultation starts with no new reading. A filled value must be 0.01 to 200 kg. */
+export function parseConsultationWeight(
+  value: string,
+): { ok: true; kg: number | null } | { ok: false; message: string } {
+  const parsed = optionalWeight.safeParse(value);
+  if (!parsed.success) {
+    return { ok: false, message: parsed.error.issues[0]?.message ?? "Enter a weight between 0.01 and 200 kg." };
+  }
+  return { ok: true, kg: parsed.data };
+}
 
 export const weightSchema = z.object({
   petId: uuid,

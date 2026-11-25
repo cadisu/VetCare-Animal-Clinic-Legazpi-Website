@@ -8,6 +8,7 @@ const STYLES: Record<AppointmentStatus, string> = {
   COMPLETED: "bg-slate-100 text-slate-700 ring-slate-200",
   CANCELLED: "bg-red-50 text-red-700 ring-red-200",
   NO_SHOW: "bg-orange-50 text-orange-800 ring-orange-200",
+  EXPIRED: "bg-stone-100 text-stone-700 ring-stone-200",
 };
 
 const UNKNOWN_STYLE = "bg-slate-100 text-slate-700 ring-slate-200";

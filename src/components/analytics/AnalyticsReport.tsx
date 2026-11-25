@@ -58,11 +58,6 @@ export function AnalyticsFilters({
           Apply range
         </button>
       </form>
-      {from && to ? (
-        <p className="mt-3 text-sm text-muted">
-          {formatDate(from)} to {formatDate(to)}, Asia/Manila. The start and end dates are included.
-        </p>
-      ) : null}
     </section>
   );
 }

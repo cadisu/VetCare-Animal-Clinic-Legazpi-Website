@@ -38,6 +38,7 @@ const REQUIRED_LABELS: Record<AppointmentStatus, string> = {
   COMPLETED: "Completed",
   CANCELLED: "Cancelled",
   NO_SHOW: "No Show",
+  EXPIRED: "Expired",
 };
 
 function allow(
@@ -106,7 +107,7 @@ describe("rejected transitions", () => {
     expect(allow("SENIOR_VET", currentStatus, nextStatus)).toEqual({ ok: false, code: "invalid" });
   });
 
-  it.each(["COMPLETED", "CANCELLED", "NO_SHOW"] as const)(
+  it.each(["COMPLETED", "CANCELLED", "NO_SHOW", "EXPIRED"] as const)(
     "does not reopen a %s appointment",
     (currentStatus) => {
       for (const nextStatus of APPOINTMENT_STATUSES) {
@@ -149,6 +150,7 @@ describe("visible actions", () => {
     COMPLETED: [],
     CANCELLED: [],
     NO_SHOW: [],
+    EXPIRED: [],
   };
 
   it.each(["STAFF", "SENIOR_VET"] as const)("shows only valid %s actions", (role) => {
@@ -180,6 +182,7 @@ describe("upcoming appointments", () => {
     expect(isClientUpcomingAppointment("2099-01-01", "09:00:00", "CANCELLED")).toBe(false);
     expect(isClientUpcomingAppointment("2099-01-01", "09:00:00", "COMPLETED")).toBe(false);
     expect(isClientUpcomingAppointment("2099-01-01", "09:00:00", "NO_SHOW")).toBe(false);
+    expect(isClientUpcomingAppointment("2099-01-01", "09:00:00", "EXPIRED")).toBe(false);
   });
 
   it("does not treat a past slot as upcoming", () => {
@@ -211,6 +214,7 @@ describe("senior vet schedule marks", () => {
     expect(scheduleRecordMark("COMPLETED", true)).toBe("recorded");
     expect(scheduleRecordMark("CANCELLED", false)).toBe("closed");
     expect(scheduleRecordMark("NO_SHOW", false)).toBe("closed");
+    expect(scheduleRecordMark("EXPIRED", false)).toBe("closed");
     expect(scheduleRecordMark("CONFIRMED", false)).toBeNull();
   });
 });

@@ -20,6 +20,7 @@ import {
   bookAppointmentSchema,
   staffAppointmentSchema,
 } from "@/lib/validation/appointment";
+import { parseConsultationWeight } from "@/lib/validation/clinical";
 import { createClient } from "@/lib/supabase/server";
 
 const GENERIC = "Something went wrong. Please try again.";
@@ -327,6 +328,38 @@ export async function transitionAppointmentStatusAction(formData: FormData): Pro
     profile.role !== "CLIENT" && nextStatus === "CANCELLED" ? reason ?? null : null;
 
   const supabase = await createClient();
+  if (profile.role !== "CLIENT" && nextStatus === "IN_CONSULTATION") {
+    const weight = parseConsultationWeight(String(formData.get("weightKg") ?? ""));
+    if (!weight.ok) {
+      redirectWithAppointmentStatus(destination.path, destination.keepDay, day, null, "weight");
+    }
+    if (weight.kg !== null) {
+      const { data: appointment } = await supabase
+        .from("appointments")
+        .select("pet_id")
+        .eq("id", appointmentId)
+        .maybeSingle();
+      if (!appointment?.pet_id) {
+        redirectWithAppointmentStatus(destination.path, destination.keepDay, day, null, "not_found");
+      }
+      const { error: weightError } = await supabase.rpc("record_pet_weight", {
+        p_pet_id: appointment.pet_id,
+        p_weight_kg: weight.kg,
+        p_appointment_id: appointmentId,
+      });
+      if (weightError) {
+        const message = weightError.message ?? "";
+        redirectWithAppointmentStatus(
+          destination.path,
+          destination.keepDay,
+          day,
+          null,
+          message.includes("weight") ? "weight" : appointmentTransitionErrorCode(message),
+        );
+      }
+    }
+  }
+
   const { error } = await supabase.rpc("transition_appointment_status", {
     p_appointment_id: appointmentId,
     p_next_status: nextStatus,
